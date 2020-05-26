@@ -1,5 +1,6 @@
 # MichelaNGLo-api
-A python module to interact with the Michelaɴɢʟo server programmatically.
+A python module to interact with the Michelaɴɢʟo server ([<https://michelanglo.sgc.ox.ac.uk>](<https://michelanglo.sgc.ox.ac.uk>))
+programmatically.
 
 > :hammer: The migration is not complete!
 
@@ -13,69 +14,97 @@ There are three tiers of users. Basic, priviledged, admin. Basic users cannot ad
 
 ## Documentation
 
- simple API interface for Py3.6+ for
-[<https://michelanglo.sgc.ox.ac.uk>](<https://michelanglo.sgc.ox.ac.uk>).
+### Authenticate
+To start, authenticate.
 
     mike = MikeAPI('username','password')
-    page_data = mike.get_page('abcdedf-uuid-string-of-page')
-    page\_data\['title'\] = 'Hello World'
-    mike.set\_page('abcdedf-uuid-string-of-page',page\_data)
+    
+The argument `url` sets other address outside of the SGC one, such as `http://0.0.0.0:8088`.
+The password and username can be ommitted, in which case they are either read from the environment variables
+ `MICHELANGLO_PASSWORD` and `MICHELANGLO_USERNAME` or the user is prompted.
+ 
+To check all worked `mike.verify_user()`. This will show your `rank` (see [user priviledges in the site](https://michelanglo.sgc.ox.ac.uk/docs/users)).
 
-New pages can be added using either a pdb code or a filename with
-additional arguments as used by prolinks, but with underscores instead
-of spaces. 
+#### Instance attributes:
+* `.url` is 'https://michelanglo.sgc.ox.ac.uk/' unless altered (_e.g._ local version of Michelanglo)
+* `.username` is the username
+* `.password` is the raw password, so do not share pickles!
+* `.visited_pages`, `.owned_pages` and `.public_pages` are lists filled by `.refresh_pages()`
+* `.request` is the requests session object.
 
-\>\>\> new\_page = mike.convert\_pdb(code='1UBQ',
-data\_focus='residue', data\_selection='20:A') \>\>\> new\_page =
-mike.convert\_pdb(filename='/home/my\_protein.pdb')
+#### Instance methods:
+* `.post(route, data=None, headers=None)` does the requests for other methods...
+* `.post_json(route, data=None, headers=None)` as above but decodes the json reply...
+* `.login()`. called automatically during initialisation.
+* `.verify_user()`. check whether you are still logged in.
+* `.refresh_pages()`. gets the lists `.visited_pages`, `.owned_pages` and `.public_pages` (and `.all` if admin)
+* `.get_page(uuid)` returns the `MikePage` instance for a given page. See below.
+* `.set_page(uuid, data)` sets the `MikePage` instance for a given page.  See below.
+* `.delete_page(uuid)` delete.  See below.
 
-To display in a Jupyter notebook a link use
-<span class="title-ref">mike.page\_link(uuid)</span>, however will not
-work in terminal I think.
 
-Altering 'loadfun' (the JS) and 'pdb' is restricted to admin and
-approved users.
+### Page editing
 
-  - Note, changing the variable name in 'proteinJSON' for the PDB code
-    requires it to be changed in 'pdb'.  
-    \>\>\> page\_data\['proteinJSON'\]\[2\]\['value'\] =
-    'altered\_variable\_name' \>\>\> page\_data\['pdb'\]\[2\]\[0\] =
-    'altered\_variable\_name'
+To see what pages you own, you can use:
 
-\#\#\# Instance attributes: \* <span class="title-ref">.url</span> is
-'<https://michelanglo.sgc.ox.ac.uk/>' unless altered (\_e.g.\_ local
-version of Michelanglo) \* <span class="title-ref">.username</span> is
-the username \* <span class="title-ref">.password</span> is the raw
-password \* <span class="title-ref">.visited\_pages</span>,
-<span class="title-ref">.owned\_pages</span> and
-<span class="title-ref">.public\_pages</span> are lists filled by
-<span class="title-ref">.refresh\_pages()</span> \*
-<span class="title-ref">.request</span> is a requests session object.
+* `mike.owned_pages` Pages you created/edited
+* `mike.visited_pages` Pages you visited
+* `mike.public_pages` All pages in gallery
+* `mike.all_pages` (admin only)
 
-\#\#\# Instance methods: \* <span class="title-ref">.post(route,
-data=None, headers=None)</span> does the requests for other methods...
-\* <span class="title-ref">.post\_json(route, data=None,
-headers=None)</span> as above but decodes the json reply... \*
-<span class="title-ref">.login()</span>. called automatically during
-initialisation. \* <span class="title-ref">.verify\_user()</span>. check
-whether you are still logged in. \*
-<span class="title-ref">.refresh\_pages()</span>. gets the lists
-<span class="title-ref">.visited\_pages</span>,
-<span class="title-ref">.owned\_pages</span> and
-<span class="title-ref">.public\_pages</span> (and
-<span class="title-ref">.all</span> if admin) \*
-<span class="title-ref">.get\_page(uuid)</span> returns the data (:dict)
-for a given page. \* <span class="title-ref">.set\_page(uuid,
-data)</span> sets the data (:dict) for a given page \*
-<span class="title-ref">.delete\_page(uuid)</span> delete \*
-<span class="title-ref">.rename\_page(uuid, name)</span> rename (admin
-only\!)
+These are lists of `MikePage` instances that are *not* retrieved. Retrieval would reset the expiration date and would be heavy.
 
-\#\#\# keys of page json Some are obsolete. 'viewport', 'image',
-'uniform\_non\_carbon', 'verbose', 'validation', 'stick\_format',
-'save', 'backgroundcolor', 'location\_viewport', 'columns\_viewport',
-'columns\_text', 'pdb', 'loadfun', 'proteinJSON', 'author', 'editors',
-'description', 'title', 'visitors', 'authors', 'public', 'confidential',
-'stick', 'data\_other', 'date', 'page', 'key', 'encryption',
-'freelyeditable', 'user', 'editable', 'no\_user', 'no\_buttons',
-'no\_analytics', 'current\_page'
+    page = mike.owned_pages[0].retrieve()
+    
+A specific page can be explicitly retrieved.
+    
+    page = mike.get_page('abcdedf-uuid-string-of-page')
+    
+Pages can be edited:
+
+    page.title = 'Hello World'
+    page.commit()
+    
+But not all attribute changes are allowed. To understand what does an attribute do (apart from using `help`) you can query it with:
+
+    page.what_is('location_viewport')
+    
+Note that two properties are Enums, `.public` handled by `Privacy` and `.location_viewport` handled by `Location`.
+This is to avoid arbitrary values:
+
+    p.public = Privacy['public']
+    p.public = p.public.__class__['public'] # if you forgot/don't want to import `Privacy`.
+
+In addition two methods alter the page with new keys (`commit` still required). `page.clear_revisions()`
+and `page.refresh_image()`.
+
+To display in a Jupyter notebook a link and a thumbnail use `page.show_link()`, however will not work in terminal.
+
+Some methods are duplicated between `MikeAPI` and `MikePage`.
+  
+* `page.retrieve()` = `mike.set_page(uuid)`
+* `page.commit()` = `mike.set_page(uuid, page)`
+* `page.delete()` = `mike.del_page(uuid)`
+* `page.shorten(short)` = `mike.shorten_page(uuid, short)`
+
+There is no difference.
+
+Altering 'loadfun' (the JS) and 'pdb' is restricted to admin and approved users.
+
+Note, changing the variable name in 'proteinJSON' for the PDB code requires it to be changed in 'pdb'.
+
+    page_data['proteinJSON'][2]['value'] = 'altered_variable_name'
+    page_data['pdb'][2][0] = 'altered_variable_name'
+    
+## Page creation
+New pages can be added using either a pdb code or a filename with additional arguments as used by prolinks,
+but with underscores instead of spaces.
+
+    new_page = mike.convert_pdb(code='1UBQ', data_focus='residue', data_selection='20:A')
+    new_page = mike.convert_pdb(filename='/home/my_protein.pdb')
+
+
+
+
+
+For more, see [Sphinx generated documentation](sphinx-docs.md).
