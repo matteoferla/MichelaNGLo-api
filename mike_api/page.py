@@ -272,8 +272,9 @@ class MikePage:
 
     def save(self, name:str):
         """
-        Save the description and JS for easier editing
+        Save the description, pdbs and JS for easier editing
 
+        :param name:  filename (path okay) with no extension.
         :return:
         """
         with open(name+'.md', 'w') as w:
@@ -284,6 +285,20 @@ class MikePage:
             with open(f'{name}-{pdbname}.pdbs', 'w') as w:
                 w.write(self.pdbs[pdbname])
 
+    def load(self, name:str):
+        """
+        Loads what was saved with ``.save``
+
+        :param name:  filename (path okay) with no extension.
+        :return:
+        """
+        with open(name+'.md', 'r') as r:
+            self.description = r.read()
+        with open(name + '.js', 'r') as r:
+            self.loadfun = r.read()
+        for pdbname in self.pdbs:
+            with open(f'{name}-{pdbname}.pdbs', 'r') as r:
+                self.pdbs[pdbname] = r.read()
 
     # ======== Parent ==================================================================================================
 
