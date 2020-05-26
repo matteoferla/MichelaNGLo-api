@@ -3,12 +3,12 @@ try:
 except ImportError:
     pass  # not jupyter.
 
-import json
+import json, re, os
 from warnings import warn
 from enum import Enum
 from typing import Any
 from datetime import datetime
-import copy
+from typing import Optional, Dict
 
 
 class Privacy(Enum):
@@ -48,7 +48,7 @@ class MikePage:
                    'encryption_key': (None.__class__, str),
                    'firsttime': bool,
                    'freelyeditable': bool,
-                   'image': (None.__class__, bool, str), #: todo fix! this legacy business
+                   'image': (None.__class__, bool, str),  #: todo fix! this legacy business
                    'is_unseen': bool,
                    'key': (None.__class__, str),
                    'loadfun': str,
@@ -58,7 +58,7 @@ class MikePage:
                    'no_buttons': bool,
                    'no_user': bool,
                    'page': str,
-                   'pdb': dict, # not list of tuples!
+                   'pdb': dict,  # not list of tuples!
                    'proteinJSON': list,
                    'public': Privacy,
                    'revisions': list,
@@ -125,8 +125,8 @@ class MikePage:
         self.parent = parent
         self.page = uuid
         self.date = datetime.min
-        self.protein = []
-        self.pdb = {}
+        self.proteins = []
+        self.pdbs = {}
         # set these to off for safety
         self._columns_viewport = 6
         self._columns_text = 6
@@ -145,8 +145,8 @@ class MikePage:
             return getattr(self, attr)
 
     def __setattr__(self, attr, value) -> None:
-        if attr in self.preferences and not isinstance(value, self.preferences[attr]):
-                raise TypeError(f'{attr} is expected to be {self.preferences[attr]}, {value} is {type(value).__name__}')
+        if attr in self.preferences and not isinstance(value, self.preferences[attr]): # ignore overzealous pycharm warning
+            raise TypeError(f'{attr} is expected to be {self.preferences[attr]}, {value} is {type(value).__name__}')
         else:
             self.__dict__[attr] = value
 
@@ -180,7 +180,7 @@ class MikePage:
     def columns_text(self, value):
         self.columns_viewport = 12 - value
 
-    # ==== Columns =====================================================================================================
+    # ==== IO ==========================================================================================================
 
     def parse(self, data):
         """
@@ -191,9 +191,9 @@ class MikePage:
         # proteinJSON -> protein
         # unfortunately I need to change how the data is sent. but I never get round to it.
         if isinstance(data['proteinJSON'], str):  # will be.
-            self.protein = json.loads(data['proteinJSON'])
+            self.proteins = json.loads(data['proteinJSON'])
         else:
-            self.protein = data['proteinJSON']
+            self.proteins = data['proteinJSON']
         del data['proteinJSON']
         if isinstance(data['pdb'], str):  # will be.
             try:
@@ -202,7 +202,7 @@ class MikePage:
                 warn('Pre-beta entry!')
                 data['pdb'] = [[data['proteinJSON'][0]['value'], data['pdb']]]
         # pdb
-        self.pdb = dict(data['pdb'])
+        self.pdbs = dict(data['pdb'])
         del data['pdb']
         # date
         self.date = datetime.fromisoformat(data['date'])
@@ -221,14 +221,17 @@ class MikePage:
     def dump(self):
         data = self.__dict__.copy()
         data['page'] = self.page
-        data['proteinJSON'] = json.dumps(self.protein)
-        del data['protein']
-        data['pdb'] = json.dumps([[k, v] for k, v in self.pdb.items()])
+        data['proteinJSON'] = json.dumps(self.proteinss)
+        del data['proteins']
+        data['pdb'] = json.dumps([[k, v] for k, v in self.pdbs.items()])
+        del data['pdbs']
         del data['date']
         # enums
         data['location_viewport'] = self.location_viewport.name
         data['public'] = self.public.name
         return data
+
+    # ======== Misc ====================================================================================================
 
     @property
     def link(self) -> str:
@@ -239,7 +242,7 @@ class MikePage:
     def show_link(self) -> None:
         display(HTML(self.link))
 
-    def what_is(self, attr):
+    def what_is(self, attr: str):
         """
         Query what an attribute does.
 
@@ -266,6 +269,102 @@ class MikePage:
         :return: None
         """
         self.refresh_image = True
+
+    def save(self, name:str):
+        """
+        Save the description and JS for easier editing
+
+        :return:
+        """
+        with open(name+'.md', 'w') as w:
+            w.write(self.description)
+        with open(name + '.js', 'w') as w:
+            w.write(self.loadfun)
+        for pdbname in self.pdbs:
+            with open(f'{name}-{pdbname}.pdbs', 'w') as w:
+                w.write(self.pdbs[pdbname])
+
+
+    # ======== Parent ==================================================================================================
+
+    def rename_protein_variable(self, 
+                       index: Optional[int] = None,
+                       name: Optional[str] = None,
+                       value: Optional[str] = None,
+                       newname: Optional[str] = None):
+        """
+        Overloaded method. accepts one of the three parameters:
+        
+        :param index: list index
+        :param name: name of protein
+        :param value: value of protein, this is the JS function
+        :param newname: if None, it will remove it as a variable and change the type to data.
+        :return: 
+        """
+        protein = self.get_protein(index, name, value)
+        oldname = protein['value']
+        if newname and re.search('[^\w\_]', newname) is not None:
+            raise ValueError(f'{newname} is not legal')
+        elif newname and 'isVariable' in protein and protein['isVariable'] in (True, 'true'): # rename
+            protein['value'] = re.replace('[^\w\_]','', newname)
+            self.pdbs[newname] = self.pdbs[oldname]
+            del self.pdbs[oldname]
+        elif newname:
+            protein['value'] = newname
+        else:
+            protein['value'] = self.pdbs[oldname]
+            del protein['isVariable']
+            del self.pdbs[oldname]
+    
+    def get_protein(self,
+                    index: Optional[int] = None,
+                       name: Optional[str] = None,
+                       value: Optional[str] = None) -> Dict:
+        """
+        Overloaded method. accepts one of the three parameters:
+        
+        :param index: list index
+        :param name: name of protein
+        :param value: value of protein, this is the JS function
+        :return: the protein entry
+        """
+        not_none = len([v for v in (index, name, value) if v is not None])
+        if not_none == 0:
+            raise ValueError('Specify one of index, name, value.')
+        elif not_none > 1:
+            raise ValueError('Specify only one of index, name, value.')
+        elif index is not None:
+            return self.proteins[index]
+        elif name is not None:
+            return [p for p in self.proteins if 'name' in p and p['name'] == name][0]
+        elif value is not None:
+            return [p for p in self.proteins if 'value' in p and p['value'] == value][0]
+        else:
+            raise ValueError('Impossible.')
+
+    def make_github_entry(self, username: str, repo: str, path: str) -> Dict:
+        """
+        make a protein entry.
+
+        :param username: Github username
+        :param repo: repository
+        :param path: path within repo
+        :return:
+        """
+        url = f'https://raw.githubusercontent.com/{username}/{repo}/master/{path}'
+        name = re.replace('[^\w_]', os.path.splitext(os.path.split(path)[1])[0])
+        return {'type': 'url', 'value': url, 'name': name}
+
+    def append_github_entry(self, username: str, repo: str, path: str) -> int:
+        """
+        make and add a protein entry.
+
+        :param username: Github username
+        :param repo: repository
+        :param path: path within repo
+        :return:
+        """
+        return self.proteins.append(self.make_github_entry(username, repo, path))
 
     # ======== Parent ==================================================================================================
 
@@ -298,6 +397,10 @@ class MikePage:
         elif self.description:
             text += f'{self.description}\n'
         return text
+
+
+# ======== Extend docs =================================================================================================
+
 
 MikePage.__doc__ += '\n Attributes:'
 for key in MikePage.definitions:

@@ -91,10 +91,15 @@ There is no difference.
 
 Altering 'loadfun' (the JS) and 'pdb' is restricted to admin and approved users.
 
-Note, changing the variable name in 'proteinJSON' for the PDB code requires it to be changed in 'pdb'.
+As changing the variable name in 'proteins' for the PDB code requires it to be changed in 'pdb'.
 
-    page_data['proteinJSON'][2]['value'] = 'altered_variable_name'
-    page_data['pdb'][2][0] = 'altered_variable_name'
+    page.proteins[2]['value'] = 'altered_variable_name'
+    page.pdb['altered_variable_name']
+    
+The method `.rename_protein_variable()` does this for you.
+    
+Proteins stored in GitHub can be added via `page.append_github_entry(self, username, repo, path)` where the name
+will be a sluggified filename.
     
 ## Page creation
 New pages can be added using either a pdb code or a filename with additional arguments as used by prolinks,
@@ -102,9 +107,13 @@ but with underscores instead of spaces.
 
     new_page = mike.convert_pdb(code='1UBQ', data_focus='residue', data_selection='20:A')
     new_page = mike.convert_pdb(filename='/home/my_protein.pdb')
-
-
-
-
+    
+## More
 
 For more, see [Sphinx generated documentation](sphinx-docs.md).
+
+## To Do
+
+* Get Uniprot chain definitions
+* Github
+* 

@@ -1,8 +1,15 @@
 import requests, json, pickle, re, os
 from warnings import warn
 from typing import Dict, Optional
+from datetime import datetime, timedelta
+import time
 
 from .page import MikePage
+
+try:
+    from .progressbar import Progress
+except:
+    Progress = None
 
 class MikeAPI:
 
@@ -172,29 +179,43 @@ class MikeAPI:
     def print_reply(reply):
         print(f'Status code: {reply.status_code}; Headers: {reply.headers}; Content: {reply.content}')
 
-    def make_github_entry(self, username: str, repo: str, path: str) -> Dict:
-        """
-        make a proteinJSON entry.
-        """
-        url = f'https://raw.githubusercontent.com/{username}/{repo}/master/{path}'
-        name = re.replace('[^\w_]', os.path.splitext(os.path.split(path)[1])[0])
-        return {'type': 'url', 'value': url, 'name': name}
-
-    def rename_pdb(self, data, name: str, idx: Optional[int] = None, original: Optional[str] = None):
-        # original is the name in the original version. idx is the index
-        if original is not None:
-            for p in data['pdb']:
-                if p[0] == original:
-                    p[0] = name
-                    break
-            for p in data['proteinJSON']:
-                if p['value'] == original:
-                    p['value'] = name
-                    break
-        elif idx is not None:
-            data['proteinJSON'][idx]['value'] = name
-            data['pdb'][idx][0] = name
-        else:
-            raise TypeError('specify either idx or original')
+    # def rename_pdb(self, data, name: str, idx: Optional[int] = None, original: Optional[str] = None):
+    #     # original is the name in the original version. idx is the index
+    #     if original is not None:
+    #         for p in data['pdb']:
+    #             if p[0] == original:
+    #                 p[0] = name
+    #                 break
+    #         for p in data['proteinJSON']:
+    #             if p['value'] == original:
+    #                 p['value'] = name
+    #                 break
+    #     elif idx is not None:
+    #         data['proteinJSON'][idx]['value'] = name
+    #         data['pdb'][idx][0] = name
+    #     else:
+    #         raise TypeError('specify either idx or original')
 
 # ======================================================================================================================
+
+    def set_toast(self, title: str, description: str, bg:str='bg-danger'):
+        # admin only.
+        return self.post_json('set', {'item': 'msg',
+                               'title': title,
+                               'descr': description,
+                               'bg': bg})
+
+    def reset(self, change: str):
+        timeout = 60 * 5
+        self.set_toast(title= '<i class="far fa-danger"></i> The server reset',
+                        descr= f'In order to implement the latest changes{change}, the server will reset at '+\
+                               f'{datetime.now() + timedelta(seconds=timeout)} BST ({timeout} sec. countdown). '+\
+                               f'This will be a brief blip. You might not even notice it!',
+                        bg = 'bg-danger')
+        if Progress is not None:
+            Progress().countdown(timeout)
+        time.sleep(timeout)
+        try:
+            print(self.post_json('set',{'item':'terminate', 'code': os.environ['MIKE_SECRET']}))
+        except:
+            print('Server resetting.')
