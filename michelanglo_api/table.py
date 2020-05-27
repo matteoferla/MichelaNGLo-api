@@ -141,7 +141,7 @@ class TableMixin:
                         let hits = (fragment_row === -1) ? [] : data[fragment_row].replace(' ', '').replace(/_0/g, '').split(',');
                         if (!myData.proteins.some(v => v.name === name)) {
                             let ref_url = giturl+'/';
-                            ref_url += (template_row === -1) ? 'template.pdb' : data[template_row];
+                            ref_url += (template_row === -1) ? 'template.pdb' : data[template_row].replace('.pdb','')+'.pdb';
                             myData.proteins.push({
                                 type: 'url',
                                 value: ref_url,
@@ -154,7 +154,7 @@ class TableMixin:
                                     protein.autoView(protein_sele, 2000);
                                     // ligand
                                     NGL.getStage('viewport').loadFile(
-                                        `${giturl}/${data[0]}.mol`)
+                                        `${giturl}/${data[0].replace('.mol','')}.mol`)
                                         .then(molecule => {
                                             molecule.removeAllRepresentations();
                                             molecule.addRepresentation("hyperball", {sele: 'not _H', colorValue: 'teal', opacity: 0.3});
