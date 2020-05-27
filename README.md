@@ -115,5 +115,5 @@ For more, see [Sphinx generated documentation](sphinx-docs.md).
 ## To Do
 
 * Get Uniprot chain definitions
-* Github
+* read/write MD from/to cell
 * 

@@ -10,6 +10,11 @@ from typing import Any
 from datetime import datetime
 from typing import Optional, Dict
 
+try:
+    from .table import TableMixin
+except ImportError:
+    class TableMixin:
+        pass
 
 class Privacy(Enum):
     private = 0
@@ -24,7 +29,7 @@ class Location(Enum):
     right = 1
 
 
-class MikePage:
+class MikePage(TableMixin):
     """
     This class holds page data.
     And adds some extra conversion features.
@@ -133,6 +138,7 @@ class MikePage:
         self.encryption = False
         self.encryption_key = str()
         self.public = Privacy.private
+        self.location_viewport = Location.left
         self.freelyeditable = False
         self.new_editors = []
         self.model = False
@@ -221,7 +227,7 @@ class MikePage:
     def dump(self):
         data = self.__dict__.copy()
         data['page'] = self.page
-        data['proteinJSON'] = json.dumps(self.proteinss)
+        data['proteinJSON'] = json.dumps(self.proteins)
         del data['proteins']
         data['pdb'] = json.dumps([[k, v] for k, v in self.pdbs.items()])
         del data['pdbs']
@@ -367,7 +373,7 @@ class MikePage:
         :return:
         """
         url = f'https://raw.githubusercontent.com/{username}/{repo}/master/{path}'
-        name = re.replace('[^\w_]', os.path.splitext(os.path.split(path)[1])[0])
+        name = re.sub('[^\w_]', '', os.path.splitext(os.path.split(path)[1])[0])
         return {'type': 'url', 'value': url, 'name': name}
 
     def append_github_entry(self, username: str, repo: str, path: str) -> int:
@@ -379,7 +385,8 @@ class MikePage:
         :param path: path within repo
         :return:
         """
-        return self.proteins.append(self.make_github_entry(username, repo, path))
+        self.proteins.append(self.make_github_entry(username, repo, path))
+        return len(self.proteins) - 1
 
     # ======== Parent ==================================================================================================
 
@@ -401,7 +408,7 @@ class MikePage:
         return self.parent.shorten_page(self.page, short_name)
 
     def __repr__(self):
-        return f'<MikePage:{self.page} at {id(self)}>'
+        return f'<MikePage:{self.page} at {hex(id(self))}>'
 
     def __str__(self):
         text = f'Page {self.page}\n'

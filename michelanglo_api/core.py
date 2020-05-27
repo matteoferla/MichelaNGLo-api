@@ -11,12 +11,13 @@ try:
 except:
     Progress = None
 
+
 class MikeAPI:
 
     def __init__(self,
-                 username: Optional[str]=None,
-                 password: Optional[str]=None,
-                 session: Optional[requests.Session]=None,
+                 username: Optional[str] = None,
+                 password: Optional[str] = None,
+                 session: Optional[requests.Session] = None,
                  url: str = 'https://michelanglo.sgc.ox.ac.uk/'):
         """
         Gets the API interface thingamabob.
@@ -124,8 +125,8 @@ class MikeAPI:
 
     def shorten_page(self, uuid, short_name):
         return self.post_json('set', {'item': 'shorten',
-                               'short': uuid,
-                               'long': short_name})
+                                      'short': uuid,
+                                      'long': short_name})
 
     # ==================================================================================================================
 
@@ -149,7 +150,8 @@ class MikeAPI:
             raise ValueError('Specifiy at least a pdb `code` or a `file`')
         data['viewcode'] = ' '.join(
             ['{a}="{p}"'.format(p=prolink_settings[s], a=s.replace('_', '-')) for s in prolink_settings])
-        return self.post_json('convert_pdb', data)
+        reply = self.post_json('convert_pdb', data)
+        return MikePage(self, reply['page'])
 
     # ==================================================================================================================
 
@@ -172,8 +174,8 @@ class MikeAPI:
                 data['pdb'] = False
         else:
             raise ValueError('Demo or file')
-        return self.post_json('convert_pse', data)
-
+        reply = self.post_json('convert_pse', data)
+        return MikePage(self, reply['page'])
 
     @staticmethod
     def print_reply(reply):
@@ -196,26 +198,26 @@ class MikeAPI:
     #     else:
     #         raise TypeError('specify either idx or original')
 
-# ======================================================================================================================
+    # ======================================================================================================================
 
-    def set_toast(self, title: str, description: str, bg:str='bg-danger'):
+    def set_toast(self, title: str, description: str, bg: str = 'bg-danger'):
         # admin only.
         return self.post_json('set', {'item': 'msg',
-                               'title': title,
-                               'descr': description,
-                               'bg': bg})
+                                      'title': title,
+                                      'descr': description,
+                                      'bg': bg})
 
     def reset(self, change: str):
         timeout = 60 * 5
-        self.set_toast(title= '<i class="far fa-danger"></i> The server reset',
-                        descr= f'In order to implement the latest changes{change}, the server will reset at '+\
-                               f'{datetime.now() + timedelta(seconds=timeout)} BST ({timeout} sec. countdown). '+\
-                               f'This will be a brief blip. You might not even notice it!',
-                        bg = 'bg-danger')
+        self.set_toast(title='<i class="far fa-danger"></i> The server reset',
+                       description=f'In order to implement the latest changes{change}, the server will reset at ' + \
+                                   f'{datetime.now() + timedelta(seconds=timeout)} BST ({timeout} sec. countdown). ' + \
+                                   f'This will be a brief blip. You might not even notice it!',
+                       bg='bg-danger')
         if Progress is not None:
             Progress().countdown(timeout)
         time.sleep(timeout)
         try:
-            print(self.post_json('set',{'item':'terminate', 'code': os.environ['MIKE_SECRET']}))
+            print(self.post_json('set', {'item': 'terminate', 'code': os.environ['MIKE_SECRET']}))
         except:
             print('Server resetting.')
