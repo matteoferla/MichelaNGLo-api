@@ -2,7 +2,7 @@
 A python module to interact with the Michelaɴɢʟo server ([<https://michelanglo.sgc.ox.ac.uk>](<https://michelanglo.sgc.ox.ac.uk>))
 programmatically.
 
-> :hammer: The migration is not complete!
+> :hammer: The migration is partial. But this repo is not expected to get more TLC for a few months.
 
 ## Notes
 The details of the requests accepted by Michelaɴɢʟo are described in [its documentation](https://michelanglo.sgc.ox.ac.uk/docs/api).\
