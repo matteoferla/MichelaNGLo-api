@@ -136,6 +136,8 @@ class TableMixin:
         self.loadfun +=  '''window.makeTableClickable = (giturl, protein_sele, template_row, fragment_row) => {
                         $('#data tbody').css('cursor', 'pointer');
                         $('#data tbody').on('click', 'tr', function () {
+                        $('#data .bg-info').removeClass('bg-info');
+                        $(this).addClass('bg-info');
                         let data = dt.row(this).data();
                         let name = data[0].trim();
                         let hits = (fragment_row === -1) ? [] : data[fragment_row].replace(' ', '').replace(/_0/g, '').split(',');
