@@ -147,8 +147,7 @@ They require GitHub for storing the `mol` files.
                    fragment_row=1, # the inspiration fragments (-1 for none). The names must match with or without a .mol.
                    jsonfile='data.json')
     page.commit()
-    # if in a Jupyter notebook
-    page.show_link()
+    # git add, commit and push
 
 ## More
 
