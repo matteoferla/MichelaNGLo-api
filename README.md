@@ -112,6 +112,44 @@ but with underscores instead of spaces.
 
 Some commands are for admins only. Please do not try them out or you will get automatically blocked.
 
+## Table
+
+For the Covid Moonshot, I made a few interactive tables with different poses,
+_eg._ [Fragmenstein hits](https://michelanglo.sgc.ox.ac.uk/data/13523b58-d0b1-4d05-9158-a8fd2be8465c).
+
+This is not meant to be an official feature, but these can be made with the API by a priviledged users.
+They require GitHub for storing the `mol` files.
+
+    gitfolder='/Users/you/path_to_your_github_repo_on_your_machine'
+    sdfile='/Users/you/path_to_sdfile.sdf'
+    folder = 'folder_name_within_repo'
+    targetfolder=f'{gitfolder}/{folder}'
+    page.description = 'Hello world. '
+    page.loadfun = ''
+    page.columns_viewport = 6
+    page.columns_text = 6
+    
+    page.sdf_to_mols(sdfile=sdfile,
+                 targetfolder=targetfolder,
+                 skip_first=True) # first row is metadata in a SDF for XChem
+    page.sdf_to_json(sdfile=sdfile,
+                 keys=('∆∆G', 'comRMSD', 'N_constrained_atoms', 'runtime', 'disregarded', 'smiles'),
+                 key_defaults=(999., 999., 0, 999., 'NA', 'NA'), #what to set stuff that is null
+                 filename=f'{targetfolder}/data.json')
+    page.make_fragment_table(sdfile=sdfile,
+                   username='matteoferla',
+                   repo_name='Data_for_own_Michelanglo_pages',
+                   foldername=folder,
+                   protein_sele='145:A', # show this on protein. NGL selection
+                   sort_col=2, #sort by column index 2.
+                   sort_dir='asc', #asc or desc
+                   template_row=-1, # is the template a file called `template.pdb` (-1) or a filename in the row n?
+                   fragment_row=1, # the inspiration fragments (-1 for none). The names must match with or without a .mol.
+                   jsonfile='data.json')
+    page.commit()
+    # if in a Jupyter notebook
+    page.show_link()
+
 ## More
 
 For more, see [Sphinx generated documentation](sphinx-docs.md).
