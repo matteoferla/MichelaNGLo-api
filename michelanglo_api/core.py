@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import time
 
 from .page import MikePage
+from .enums import Privacy, Location
 
 try:
     from .progressbar import Progress
@@ -13,6 +14,8 @@ except:
 
 
 class MikeAPI:
+    Privacy = Privacy
+    Location = Location
 
     def __init__(self,
                  username: Optional[str] = None,
@@ -207,10 +210,17 @@ class MikeAPI:
                                       'descr': description,
                                       'bg': bg})
 
-    def reset(self, change: str):
-        timeout = 60 * 5
+    def reset(self, change: str = 'misc.', timeout:int=300):
+        """
+        Reset the server after ``timeout`` seconds. warning about the reset with a custom message ``change``.
+
+        :param change:
+        :param timeout:
+        :return:
+        """
+        assert 'MIKE_SECRET' in os.environ, 'Please provide the secret code as an environment variable.'
         self.set_toast(title='<i class="far fa-danger"></i> The server reset',
-                       description=f'In order to implement the latest changes{change}, the server will reset at ' + \
+                       description=f'In order to implement the latest changes ({change}), the server will reset at ' + \
                                    f'{datetime.now() + timedelta(seconds=timeout)} BST ({timeout} sec. countdown). ' + \
                                    f'This will be a brief blip. You might not even notice it!',
                        bg='bg-danger')
@@ -221,3 +231,10 @@ class MikeAPI:
             print(self.post_json('set', {'item': 'terminate', 'code': os.environ['MIKE_SECRET']}))
         except:
             print('Server resetting.')
+
+    def get_user_email(self, username: str):
+        assert 'MIKE_SECRET' in os.environ, 'Please provide the secret code as an environment variable.'
+        reply = self.post_json('login', {'action': 'email', 'username': username, 'code': os.environ['MIKE_SECRET']})
+        if 'email' not in reply:
+            raise ValueError(str(reply))
+        return reply['email']

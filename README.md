@@ -108,6 +108,10 @@ but with underscores instead of spaces.
     new_page = mike.convert_pdb(code='1UBQ', data_focus='residue', data_selection='20:A')
     new_page = mike.convert_pdb(filename='/home/my_protein.pdb')
     
+## Admin commands
+
+Some commands are for admins only. Please do not try them out or you will get automatically blocked.
+
 ## More
 
 For more, see [Sphinx generated documentation](sphinx-docs.md).

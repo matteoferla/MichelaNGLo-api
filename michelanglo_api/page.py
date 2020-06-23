@@ -5,28 +5,17 @@ except ImportError:
 
 import json, re, os
 from warnings import warn
-from enum import Enum
 from typing import Any
 from datetime import datetime
 from typing import Optional, Dict
+
+from .enums import Privacy, Location
 
 try:
     from .table import TableMixin
 except ImportError:
     class TableMixin:
         pass
-
-class Privacy(Enum):
-    private = 0
-    public = 1
-    published = 2
-    sgc = 3
-    pinned = 4
-
-
-class Location(Enum):
-    left = 0
-    right = 1
 
 
 class MikePage(TableMixin):
@@ -145,13 +134,21 @@ class MikePage(TableMixin):
         self.confidential = False
 
     def __getattr__(self, attr) -> Any:
-        if attr not in self.__dict__:
+        ## Accepts custom fields. Messes up @property, so it is done manually.
+        dynamics = {'columns_viewport': self._get_columns_viewport, 'columns_text': self._get_columns_text}
+        if attr in dynamics.keys():
+            dynamics[attr].__call__()
+        elif attr not in self.__dict__:
             return False
         else:
-            return getattr(self, attr)
+            return self.__dict__[attr]
 
     def __setattr__(self, attr, value) -> None:
-        if attr in self.preferences and not isinstance(value, self.preferences[attr]): # ignore overzealous pycharm warning
+        ## Accepts custom fields. Messes up @property, so it is done manually.
+        dynamics = {'columns_viewport': self._set_columns_viewport, 'columns_text': self._set_columns_text}
+        if attr in dynamics.keys():
+            dynamics[attr].__call__(value)
+        elif attr in self.preferences and not isinstance(value, self.preferences[attr]): # ignore overzealous pycharm warning
             raise TypeError(f'{attr} is expected to be {self.preferences[attr]}, {value} is {type(value).__name__}')
         else:
             self.__dict__[attr] = value
@@ -162,18 +159,15 @@ class MikePage(TableMixin):
         if self._columns_viewport + self._columns_text != 12:
             raise ValueError('text and viewport are not 12.')
 
-    @property
-    def columns_viewport(self):
+    def _get_columns_viewport(self):
         self.check_columns()
         return self._columns_viewport
 
-    @property
-    def columns_text(self):
+    def _get_columns_text(self):
         self.check_columns()
         return self._columns_text
 
-    @columns_viewport.setter
-    def columns_viewport(self, value):
+    def _set_columns_viewport(self, value: int):
         if not isinstance(value, int):
             raise TypeError('Expecting int')
         elif value > 12 or value < 0:
@@ -182,8 +176,7 @@ class MikePage(TableMixin):
             self._columns_text = 12 - value
             self._columns_viewport = value
 
-    @columns_text.setter
-    def columns_text(self, value):
+    def _set_columns_text(self, value: int):
         self.columns_viewport = 12 - value
 
     # ==== IO ==========================================================================================================
