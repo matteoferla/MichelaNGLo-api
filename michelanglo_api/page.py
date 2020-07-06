@@ -122,8 +122,8 @@ class MikePage(TableMixin):
         self.proteins = []
         self.pdbs = {}
         # set these to off for safety
-        self._columns_viewport = 6
-        self._columns_text = 6
+        self.columns_viewport = 6
+        self.columns_text = 6
         self.encryption = False
         self.encryption_key = str()
         self.public = Privacy.private
@@ -135,10 +135,7 @@ class MikePage(TableMixin):
 
     def __getattr__(self, attr) -> Any:
         ## Accepts custom fields. Messes up @property, so it is done manually.
-        dynamics = {'columns_viewport': self._get_columns_viewport, 'columns_text': self._get_columns_text}
-        if attr in dynamics.keys():
-            dynamics[attr].__call__()
-        elif attr not in self.__dict__:
+        if attr not in self.__dict__:
             return False
         else:
             return self.__dict__[attr]
@@ -148,7 +145,8 @@ class MikePage(TableMixin):
         dynamics = {'columns_viewport': self._set_columns_viewport, 'columns_text': self._set_columns_text}
         if attr in dynamics.keys():
             dynamics[attr].__call__(value)
-        elif attr in self.preferences and not isinstance(value, self.preferences[attr]): # ignore overzealous pycharm warning
+        elif attr in self.preferences and not isinstance(value, self.preferences[attr]):
+            # please ignore overzealous pycharm warning
             raise TypeError(f'{attr} is expected to be {self.preferences[attr]}, {value} is {type(value).__name__}')
         else:
             self.__dict__[attr] = value
@@ -156,16 +154,16 @@ class MikePage(TableMixin):
     # ==== Columns =====================================================================================================
 
     def check_columns(self):
-        if self._columns_viewport + self._columns_text != 12:
+        if self.columns_viewport + self._columns_text != 12:
             raise ValueError('text and viewport are not 12.')
 
     def _get_columns_viewport(self):
         self.check_columns()
-        return self._columns_viewport
+        return self.columns_viewport
 
     def _get_columns_text(self):
         self.check_columns()
-        return self._columns_text
+        return self.columns_text
 
     def _set_columns_viewport(self, value: int):
         if not isinstance(value, int):
@@ -173,8 +171,8 @@ class MikePage(TableMixin):
         elif value > 12 or value < 0:
             raise ValueError('Max is 12.')
         else:
-            self._columns_text = 12 - value
-            self._columns_viewport = value
+            self.__dict__['columns_text'] = 12 - value
+            self.__dict__['columns_viewport'] = value
 
     def _set_columns_text(self, value: int):
         self.columns_viewport = 12 - value
@@ -206,8 +204,6 @@ class MikePage(TableMixin):
         # date
         self.date = datetime.fromisoformat(data['date'])
         del data['date']
-        self.columns_viewport = data['columns_viewport']
-        del data['columns_viewport']
         self.location_viewport = Location[data['location_viewport']]
         del data['location_viewport']
         self.public = Privacy[data['public']]
