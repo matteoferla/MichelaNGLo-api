@@ -30,5 +30,7 @@ setup(
     license=__license__,
     author=__author__,
     author_email=__email__ ,
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     description='API to interface with Michelanglo'
 )
