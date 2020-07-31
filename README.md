@@ -149,6 +149,19 @@ They require GitHub for storing the `mol` files.
     page.commit()
     # git add, commit and push
 
+## "Merging"
+
+The object `MikePage` does not have a merge uuids like the website has. The reason for this is because this would be rather
+redundant and convoluted. To add structures to a page use the following methods:
+
+* append_github_entry
+* append_pdbfile
+* append_pdbblock
+* remove_protein
+
+Or operate upon the manually. PDBBlocks are stored in `.pdbs` (`Dict[str: str]`),
+while `.proteins` (`List[dict]`) stores the protein information.
+
 ## More
 
 For more, see [Sphinx generated documentation](sphinx-docs.md).

@@ -129,7 +129,7 @@ class MikeAPI:
     def shorten_page(self, uuid, short_name):
         return self.post_json('set', {'item': 'shorten',
                                       'short': uuid,
-                                      'long': short_name})
+                                      'long': short_name.lower()})
 
     # ==================================================================================================================
 

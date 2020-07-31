@@ -7,7 +7,7 @@ import json, re, os
 from warnings import warn
 from typing import Any
 from datetime import datetime
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 from .enums import Privacy, Location
 
@@ -265,9 +265,10 @@ class MikePage(TableMixin):
         """
         self.refresh_image = True
 
-    def save(self, name:str):
+    def to_pickle(self, name:str):
         """
-        Save the description, pdbs and JS for easier editing
+        Save the description, pdbs and JS for easier editing.
+        ``save`` appears to be a legacy keyword.
 
         :param name:  filename (path okay) with no extension.
         :return:
@@ -280,7 +281,7 @@ class MikePage(TableMixin):
             with open(f'{name}-{pdbname}.pdbs', 'w') as w:
                 w.write(self.pdbs[pdbname])
 
-    def load(self, name:str):
+    def from_pickle(self, name:str):
         """
         Loads what was saved with ``.save``
 
@@ -376,6 +377,48 @@ class MikePage(TableMixin):
         """
         self.proteins.append(self.make_github_entry(username, repo, path))
         return len(self.proteins) - 1
+
+    def append_pdbfile(self, filename: str, varname: Optional[str] = None, chain_definitions: List[dict]=[]) -> int:
+        """
+        make and add a protein entry.
+
+        :param filename: the local filename to add.
+        :param varname: what should the pdbblock be known as?
+        :param chain_definitions: list of dict defining who each chain is. Needed solely for Uniprot modal and chain name in builder
+        :return:
+        """
+        pdbblock = open(filename).read()
+        if varname is None:
+            varname = re.replace(r'[^\w_]', '', os.path.splitext(filename)[0])
+            varname = re.replace(r'^\d+', '', varname)
+            print(f'Variable name is {varname}')
+        self.append_pdbblock(pdbblock, varname, chain_definitions)
+        return len(self.proteins) - 1
+
+    def append_pdbblock(self, pdbblock: str, varname: str, chain_definitions: List[dict]=[]) -> int:
+        """
+        make and add a protein entry.
+
+        :param pdbblock: the pdbblock to add.
+        :param varname: what should the pdbblock be known as?
+        :param chain_definitions: list of dict defining who each chain is. Needed solely for Uniprot modal and chain name in builder
+        :return:
+        """
+        assert varname not in self.pdbs, f'Varname {varname} already in use.'
+        self.proteins.append({'type': 'data',
+                              'value': varname,
+                              'isVariable': 'true',
+                              'chain_definitions': chain_definitions,
+                              'history': {'code': '', 'changes': ''}})
+        self.pdbs[varname] = pdbblock
+        return len(self.proteins) - 1
+
+    def remove_protein(self, index):
+        if self.proteins[index]['type'] == 'data':
+            del self.pdbs[self.proteins[index]['value']]
+        d = self.proteins[index]
+        del self.proteins[index]
+        return d
 
     # ======== Parent ==================================================================================================
 
