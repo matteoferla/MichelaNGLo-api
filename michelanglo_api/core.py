@@ -128,8 +128,8 @@ class MikeAPI:
 
     def shorten_page(self, uuid, short_name):
         return self.post_json('set', {'item': 'shorten',
-                                      'short': uuid,
-                                      'long': short_name.lower()})
+                                      'short': short_name.lower(),
+                                      'long': uuid})
 
     # ==================================================================================================================
 
@@ -210,7 +210,7 @@ class MikeAPI:
                                       'descr': description,
                                       'bg': bg})
 
-    def reset(self, change: str = 'misc.', timeout:int=300):
+    def reset(self, change: str = 'misc.', timeout: int = 300):
         """
         Reset the server after ``timeout`` seconds. warning about the reset with a custom message ``change``.
 

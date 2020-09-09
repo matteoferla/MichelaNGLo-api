@@ -265,7 +265,7 @@ class MikePage(TableMixin):
         """
         self.refresh_image = True
 
-    def to_pickle(self, name:str):
+    def to_pickle(self, name: str):
         """
         Save the description, pdbs and JS for easier editing.
         ``save`` appears to be a legacy keyword.
@@ -273,7 +273,7 @@ class MikePage(TableMixin):
         :param name:  filename (path okay) with no extension.
         :return:
         """
-        with open(name+'.md', 'w') as w:
+        with open(name + '.md', 'w') as w:
             w.write(self.description)
         with open(name + '.js', 'w') as w:
             w.write(self.loadfun)
@@ -281,14 +281,14 @@ class MikePage(TableMixin):
             with open(f'{name}-{pdbname}.pdbs', 'w') as w:
                 w.write(self.pdbs[pdbname])
 
-    def from_pickle(self, name:str):
+    def from_pickle(self, name: str):
         """
         Loads what was saved with ``.save``
 
         :param name:  filename (path okay) with no extension.
         :return:
         """
-        with open(name+'.md', 'r') as r:
+        with open(name + '.md', 'r') as r:
             self.description = r.read()
         with open(name + '.js', 'r') as r:
             self.loadfun = r.read()
@@ -298,11 +298,11 @@ class MikePage(TableMixin):
 
     # ======== Parent ==================================================================================================
 
-    def rename_protein_variable(self, 
-                       index: Optional[int] = None,
-                       name: Optional[str] = None,
-                       value: Optional[str] = None,
-                       newname: Optional[str] = None):
+    def rename_protein_variable(self,
+                                index: Optional[int] = None,
+                                name: Optional[str] = None,
+                                value: Optional[str] = None,
+                                newname: Optional[str] = None):
         """
         Overloaded method. accepts one of the three parameters:
         
@@ -316,8 +316,8 @@ class MikePage(TableMixin):
         oldname = protein['value']
         if newname and re.search('[^\w\_]', newname) is not None:
             raise ValueError(f'{newname} is not legal')
-        elif newname and 'isVariable' in protein and protein['isVariable'] in (True, 'true'): # rename
-            protein['value'] = re.replace('[^\w\_]','', newname)
+        elif newname and 'isVariable' in protein and protein['isVariable'] in (True, 'true'):  # rename
+            protein['value'] = re.replace('[^\w\_]', '', newname)
             self.pdbs[newname] = self.pdbs[oldname]
             del self.pdbs[oldname]
         elif newname:
@@ -326,11 +326,11 @@ class MikePage(TableMixin):
             protein['value'] = self.pdbs[oldname]
             del protein['isVariable']
             del self.pdbs[oldname]
-    
+
     def get_protein(self,
                     index: Optional[int] = None,
-                       name: Optional[str] = None,
-                       value: Optional[str] = None) -> Dict:
+                    name: Optional[str] = None,
+                    value: Optional[str] = None) -> Dict:
         """
         Overloaded method. accepts one of the three parameters:
         
@@ -378,7 +378,7 @@ class MikePage(TableMixin):
         self.proteins.append(self.make_github_entry(username, repo, path))
         return len(self.proteins) - 1
 
-    def append_pdbfile(self, filename: str, varname: Optional[str] = None, chain_definitions: List[dict]=[]) -> int:
+    def append_pdbfile(self, filename: str, varname: Optional[str] = None, chain_definitions: List[dict] = []) -> int:
         """
         make and add a protein entry.
 
@@ -395,7 +395,7 @@ class MikePage(TableMixin):
         self.append_pdbblock(pdbblock, varname, chain_definitions)
         return len(self.proteins) - 1
 
-    def append_pdbblock(self, pdbblock: str, varname: str, chain_definitions: List[dict]=[]) -> int:
+    def append_pdbblock(self, pdbblock: str, varname: str, chain_definitions: List[dict] = []) -> int:
         """
         make and add a protein entry.
 
@@ -419,6 +419,44 @@ class MikePage(TableMixin):
         d = self.proteins[index]
         del self.proteins[index]
         return d
+
+    def add_publication(self,
+                        url: Optional[str] = None,
+                        authors: Optional[str] = 'TBA',
+                        year: Optional[int] = None,
+                        title: Optional[str] = 'TBA',
+                        journal: Optional[str] = 'manuscript in preparation',
+                        issue: Optional[str] = 'NA',
+                        doi: Optional[str] = None):
+        """
+        This is an admin only operation due to the security issue (dodgy links in the gallery).
+        Publication is not data from the page, it's an actual table
+
+        :param uuid:
+        :param url:
+        :param authors:
+        :param year:
+        :param title:
+        :param journal:
+        :param issue:
+        :return:
+        """
+        if year is None:
+            year = datetime.year
+        if url is not None:
+            pass
+        elif doi is None:
+            url = '#'
+        else:
+            url = f'https://dx.doi.org/{doi}'
+        return self.parent.post_json('set', {'item': 'publication',
+                                             'identifier': self.page,
+                                             'url': url,
+                                             'title': title,
+                                             'year': year,
+                                             'authors': authors,
+                                             'journal': journal,
+                                             'issue': issue})
 
     # ======== Parent ==================================================================================================
 
