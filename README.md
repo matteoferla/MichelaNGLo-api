@@ -162,6 +162,7 @@ redundant and convoluted. To add structures to a page use the following methods:
 Or operate upon the manually. PDBBlocks are stored in `.pdbs` (`Dict[str: str]`),
 while `.proteins` (`List[dict]`) stores the protein information.
 
+
 ## More
 
 For more, see [Sphinx generated documentation](sphinx-docs.md).
@@ -171,3 +172,14 @@ For more, see [Sphinx generated documentation](sphinx-docs.md).
 * Get Uniprot chain definitions
 * read/write MD from/to cell
 * 
+
+## Plotly
+
+With JS priviledges it is possible to add a Plotly plot, by exporting via `fig.write_html("file.html", include_plotlyjs='cdn')`
+and getting the content of `<body>` and adding to the description (with corrected indentation).
+Unfortunately, whereas the path-element of class `.point` contains the data values to determine what residue it is,
+I am not sure how to detect a specific click as this detects a click for the whole series...
+
+    document.getElementById('xxxx').on('plotly_hover', data =>
+        data.points.forEach(d => NGL.getStage().compList[0].addRepresentation("hyperball", { sele: ''+d.data.x[0]}))
+    )
