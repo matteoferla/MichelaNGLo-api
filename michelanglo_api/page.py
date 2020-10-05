@@ -353,16 +353,17 @@ class MikePage(TableMixin):
         else:
             raise ValueError('Impossible.')
 
-    def make_github_entry(self, username: str, repo: str, path: str) -> Dict:
+    def make_github_entry(self, username: str, repo: str, path: str, branch: str='main') -> Dict:
         """
         make a protein entry.
 
         :param username: Github username
         :param repo: repository
         :param path: path within repo
+        :param branch: main or master etc.
         :return:
         """
-        url = f'https://raw.githubusercontent.com/{username}/{repo}/main/{path}'
+        url = f'https://raw.githubusercontent.com/{username}/{repo}/{branch}/{path}'
         name = re.sub('[^\w_]', '', os.path.splitext(os.path.split(path)[1])[0])
         return {'type': 'url', 'value': url, 'name': name}
 

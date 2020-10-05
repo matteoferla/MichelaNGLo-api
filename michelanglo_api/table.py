@@ -81,7 +81,8 @@ class TableMixin:
                    sort_dir:str='asc',
                    template_row:int=-1,
                    fragment_row:int=-1,
-                   jsonfile:str='data.json'):
+                   jsonfile:str='data.json',
+                   branch:str='main'):
         """
         Makes a interactive table out of xchem submission.
 
@@ -95,9 +96,10 @@ class TableMixin:
         :param template_row: -1 for foldername/template.pdb else row in data.json to load.
         :param fragment_row: -1 for none. else read that column. comma separated. Names must match mol in foldername.
         :param jsonfile: data. use ``sdf_to_json``.
+        :param branch: main or master etc.
         :return:
         """
-        giturl = f'https://raw.githubusercontent.com/{username}/{repo_name}/main/{foldername}'
+        giturl = f'https://raw.githubusercontent.com/{username}/{repo_name}/{branch}/{foldername}'
         # Description
         meta = self.sdf_to_meta(sdfile)
         self.description += '## Fields\n\n' + ''.join([f'* **{k}**: {v}\n' for k, v in meta.items()]) + '\n'
