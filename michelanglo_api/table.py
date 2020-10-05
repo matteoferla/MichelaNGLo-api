@@ -97,7 +97,7 @@ class TableMixin:
         :param jsonfile: data. use ``sdf_to_json``.
         :return:
         """
-        giturl = f'https://raw.githubusercontent.com/{username}/{repo_name}/master/{foldername}'
+        giturl = f'https://raw.githubusercontent.com/{username}/{repo_name}/main/{foldername}'
         # Description
         meta = self.sdf_to_meta(sdfile)
         self.description += '## Fields\n\n' + ''.join([f'* **{k}**: {v}\n' for k, v in meta.items()]) + '\n'

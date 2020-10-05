@@ -362,7 +362,7 @@ class MikePage(TableMixin):
         :param path: path within repo
         :return:
         """
-        url = f'https://raw.githubusercontent.com/{username}/{repo}/master/{path}'
+        url = f'https://raw.githubusercontent.com/{username}/{repo}/main/{path}'
         name = re.sub('[^\w_]', '', os.path.splitext(os.path.split(path)[1])[0])
         return {'type': 'url', 'value': url, 'name': name}
 
