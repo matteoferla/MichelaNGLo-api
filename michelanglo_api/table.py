@@ -35,16 +35,26 @@ class TableMixin:
         suppl = Chem.SDMolSupplier(sdfile)
         return next(suppl).GetPropsAsDict()
 
-    def sdf_to_json(self, sdfile: str, keys: Sequence[str], key_defaults: Sequence[float], filename: str) -> List[list]:
+    def sdf_to_json(self,
+                    sdfile: str,
+                    keys: Sequence[str],
+                    key_defaults: Sequence[float],
+                    filename: str,
+                    spaced:bool=True
+                    ) -> List[list]:
         """
+        Get the keys out of the sdf and make a list of lists. filling blanks with the defaults.
+        A convoluted method, that evolved into doing what numpy does...
 
         :param sdfile: SDF file
         :param keys: props to show in the table
         :param key_defaults: what are the value to show if absent (e.g. ∆∆G of 999.)
         :param filename: with path data.json
+        :param spaced: convert underscores to spaces in header?
         :return:
         """
         suppl = Chem.SDMolSupplier(sdfile)
+        # Parse data
         data = []
         for i, mol in enumerate(suppl):
             if i == 0:
@@ -67,7 +77,13 @@ class TableMixin:
                 else:
                     d[k] = kd
             data.append(d)
-        flatten = [list(data[0].keys())] + [list(d.values()) for d in data]
+        # Make header
+        if not spaced:
+            header = [['name']+list(keys)]
+        else:
+            header = [[k.replace('_',' ') for k in ['name']+list(keys)]]
+        # Combine
+        flatten = header + [list(d.values()) for d in data]
         json.dump(flatten, open(filename, 'w'))
         return flatten
 
