@@ -317,7 +317,7 @@ class MikePage(TableMixin):
         if newname and re.search('[^\w\_]', newname) is not None:
             raise ValueError(f'{newname} is not legal')
         elif newname and 'isVariable' in protein and protein['isVariable'] in (True, 'true'):  # rename
-            protein['value'] = re.replace('[^\w\_]', '', newname)
+            protein['value'] = re.sub('[^\w\_]', '', newname)
             self.pdbs[newname] = self.pdbs[oldname]
             del self.pdbs[oldname]
         elif newname:
@@ -390,8 +390,8 @@ class MikePage(TableMixin):
         """
         pdbblock = open(filename).read()
         if varname is None:
-            varname = re.replace(r'[^\w_]', '', os.path.splitext(filename)[0])
-            varname = re.replace(r'^\d+', '', varname)
+            varname = re.sub(r'[^\w_]', '', os.path.splitext(filename)[0])
+            varname = re.sub(r'^\d+', '', varname)
             print(f'Variable name is {varname}')
         self.append_pdbblock(pdbblock, varname, chain_definitions)
         return len(self.proteins) - 1
