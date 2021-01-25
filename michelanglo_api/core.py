@@ -114,7 +114,7 @@ class MikeAPI:
 
     def set_page(self, uuid, page):
         uuid = self._clean_uuid(uuid)
-        data = page.dump()
+        data = page.dumps()
         return self.post_json('edit_user-page', data=data)
 
     def del_page(self, uuid):

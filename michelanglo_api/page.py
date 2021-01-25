@@ -3,7 +3,7 @@ try:
 except ImportError:
     pass  # not jupyter.
 
-import json, re, os
+import json, re, os, pickle
 from warnings import warn
 from typing import Any
 from datetime import datetime
@@ -154,7 +154,11 @@ class MikePage(TableMixin):
     # ==== Columns =====================================================================================================
 
     def check_columns(self):
-        if self.columns_viewport + self._columns_text != 12:
+        """
+        Verify that columns_viewport and columns_text are 12.
+        See bootstrap docs for details of why a full row is 12.
+        """
+        if self._columns_viewport + self._columns_text != 12:
             raise ValueError('text and viewport are not 12.')
 
     def _get_columns_viewport(self):
@@ -213,7 +217,12 @@ class MikePage(TableMixin):
             setattr(self, k, v)
         return self
 
-    def dump(self):
+    def dumps(self):
+        """
+        For proper saving see ``to_pickle`` or ``save``.
+        convert the object as dictionary.
+        :return:
+        """
         data = self.__dict__.copy()
         data['page'] = self.page
         data['proteinJSON'] = json.dumps(self.proteins)
@@ -265,12 +274,31 @@ class MikePage(TableMixin):
         """
         self.refresh_image = True
 
-    def to_pickle(self, name: str):
+    def to_pickle(self, filename: str):
+        """
+        writes to pickle
+
+        :param filename:  filename (path okay) with extension.
+        :return:
+        """
+        pickle.dump(self.dumps(), open(filename,'wb'))
+
+    def from_pickle(self, filename: str):
+        data = pickle.load(open(filename,'wb'))
+        self.page = data['page']
+        self.proteins = json.loads(data['proteinJSON'])
+        self.pdbs = {k: v for k, v in json.loads(data['pdb'])}
+        self.location_viewport.name = data['location_viewport']
+        self.public.name = data['public']
+
+    def save(self, name: str):
         """
         Save the description, pdbs and JS for easier editing.
-        ``save`` appears to be a legacy keyword.
+        It's inverse ``load`` loads them.
+        The purpose is to edit the file as opposed to a wonky notebook cell.
 
-        :param name:  filename (path okay) with no extension.
+        ``save`` is a legacy keyword in the page data, but is no longer used.
+        :param name:
         :return:
         """
         with open(name + '.md', 'w') as w:
@@ -281,9 +309,9 @@ class MikePage(TableMixin):
             with open(f'{name}-{pdbname}.pdbs', 'w') as w:
                 w.write(self.pdbs[pdbname])
 
-    def from_pickle(self, name: str):
+    def load(self, name: str):
         """
-        Loads what was saved with ``.save``
+        Loads what was saved with ``.saved``
 
         :param name:  filename (path okay) with no extension.
         :return:
