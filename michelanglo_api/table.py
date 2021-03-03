@@ -1,4 +1,6 @@
-## These are XChem relevant code.
+from typing import *
+if TYPE_CHECKING:   # from typing
+    import pandas as pd
 
 from rdkit import Chem
 import os, json
@@ -7,13 +9,54 @@ from warnings import warn
 
 class TableMixin:
 
-    def sdf_to_mols(self, sdfile: str, targetfolder: str, skip_first=True) -> List[str]:
+    def pandas_to_mols(self,
+                      df: pd.DataFrame,
+                      targetfolder: str,
+                      name_column_name: str = 'name',
+                      mol_column_name: str = 'mol',
+                      skip_first=False) -> List[str]:
+        """
+        Extracts the mols
+
+
+        :param df: pandas datatable. Most likely the dataframe is ``rdkit.Chem.PandasTools`` flavoured,
+            but this is not a requirement
+        :param targetfolder: folder where to save the mol files (in a github repo)
+        :param name_column_name: column name containing the molecule name
+        :param mol_column_name: column name containing the molecules
+        :param skip_first: default False, skip first if its definitions XChem style.
+        :return:
+        """
+        filenames = []
+        for i, row in df.iterrows():
+            if skip_first and i == 0:
+                continue
+            mol = row[mol_column_name]
+            name = row[name_column_name]
+            if mol is None:
+                filenames.append(None)
+                continue
+            elif not name:
+                filename = f'compound_{i}'
+            else:
+                def valid(character): any([character.isalpha(),
+                                           character.isdigit(),
+                                           character in (' ', '-', '_', '.')
+                                           ])
+                filename = ''.join(filter(valid, name)).strip()
+            filename += '.mol'
+            Chem.MolToMolFile(mol, filename)
+            filenames.append(filename)
+        return filenames
+
+    def sdf_to_mols(self, sdfile: str, targetfolder: str, skip_first=False) -> List[str]:
         """
         Converts a sdf file to mols for github
+        The format is the same as that required by XChem fragalysis
 
         :param sdfile: SDF file
         :param targetfolder: folder where to save the mol files (a github repo)
-        :param skip_first: skip first if its definitions XChem style.
+        :param skip_first: default True, skip first if its definitions XChem style.
         :return: list of filenames
         """
         if os.path.exists(targetfolder):
@@ -31,7 +74,7 @@ class TableMixin:
             filenames.append(filename)
         return filenames
 
-    def sdf_to_meta(self, sdfile: str):
+    def sdf_to_meta(self, sdfile: str) -> dict:
         suppl = Chem.SDMolSupplier(sdfile)
         return next(suppl).GetPropsAsDict()
 
@@ -88,7 +131,7 @@ class TableMixin:
         return flatten
 
     def make_fragment_table(self,
-                   sdfile:str,
+                   metadata:Dict[str, str],
                    username:str,
                    repo_name:str,
                    foldername:str,
@@ -101,8 +144,12 @@ class TableMixin:
                    branch:str='main'):
         """
         Makes a interactive table out of xchem submission.
+        NB. this formerly accepted an SDF (XChem style formatted) not it is agnostic
+        and accepts the dictionary metadata.
 
-        :param sdfile:
+        :param metadata: a dictionary of value -> definitions. It is for the ``description`` text and
+            not for the table per se. If really must be ommitted simply pass an empty dictionary.
+            also see ``sdf_to_meta(sdfile)``
         :param username: GitHub username
         :param repo_name: GitHub repo name
         :param foldername: folder name within repo
@@ -117,13 +164,12 @@ class TableMixin:
         """
         giturl = f'https://raw.githubusercontent.com/{username}/{repo_name}/{branch}/{foldername}'
         # Description
-        meta = self.sdf_to_meta(sdfile)
-        self.description += '## Fields\n\n' + ''.join([f'* **{k}**: {v}\n' for k, v in meta.items()]) + '\n'
+        self.description += '## Fields\n\n' + ''.join([f'* **{k}**: {v}\n' for k, v in metadata.items()]) + '\n'
         self.description += '## Data\n'
         self.description += '<table id="data" class="display" width="100%"></table>\n'
         self.description += '<link href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css" rel="stylesheet"/>\n'
         # JS
-        self.loadfun +=  '''["https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js",
+        self.loadfun += '''["https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js",
                             "https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"].map((v,i) => {
                                 setTimeout(() => {
                                     let s = document.createElement("script");
