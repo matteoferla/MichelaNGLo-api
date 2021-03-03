@@ -1,6 +1,6 @@
 from typing import *
-if TYPE_CHECKING:   # from typing
-    import pandas as pd
+# if TYPE_CHECKING:   # from typing
+#     import pandas as pd
 
 from rdkit import Chem
 import os, json
@@ -10,7 +10,7 @@ from warnings import warn
 class TableMixin:
 
     def pandas_to_mols(self,
-                      df: pd.DataFrame,
+                      df: 'pd.DataFrame',
                       targetfolder: str,
                       name_column_name: str = 'name',
                       mol_column_name: str = 'mol',
