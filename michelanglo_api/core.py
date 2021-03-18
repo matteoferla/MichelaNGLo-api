@@ -219,9 +219,10 @@ class MikeAPI:
         :return:
         """
         assert 'MIKE_SECRET' in os.environ, 'Please provide the secret code as an environment variable.'
-        self.set_toast(title='<i class="far fa-danger"></i> The server reset',
-                       description=f'In order to implement the latest changes ({change}), the server will reset at ' + \
-                                   f'{datetime.now() + timedelta(seconds=timeout)} BST ({timeout} sec. countdown). ' + \
+        self.set_toast(title='<i class="far fa-danger"></i> App server restart',
+                       description=f'In order to implement the latest changes ({change}), ' +
+                                    'the App will update and restart at ' +
+                                   f'{datetime.now() + timedelta(seconds=timeout)} BST ({timeout} sec. countdown). ' +
                                    f'This will be a brief blip. You might not even notice it!',
                        bg='bg-danger')
         if Progress is not None:

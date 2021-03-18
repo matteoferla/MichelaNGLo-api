@@ -224,6 +224,7 @@ class MikePage(TableMixin):
         :return:
         """
         data = self.__dict__.copy()
+        del data['parent']
         data['page'] = self.page
         data['proteinJSON'] = json.dumps(self.proteins)
         del data['proteins']
@@ -233,6 +234,7 @@ class MikePage(TableMixin):
         # enums
         data['location_viewport'] = self.location_viewport.name
         data['public'] = self.public.name
+        data['description'] = data['description'].strip()
         return data
 
     # ======== Misc ====================================================================================================
