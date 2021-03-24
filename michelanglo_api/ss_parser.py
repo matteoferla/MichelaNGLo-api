@@ -96,3 +96,11 @@ class SSParser:
             with open(filename, 'w') as fh:
                 fh.write(ss + block)
         return ss + block
+
+    @classmethod
+    def correct_block(cls, block: str):
+        import pymol2
+        with pymol2.PyMOL() as pymol:
+            pymol.cmd.read_pdbstr(block, 'prot')
+            ss = cls().parse_pymol(pymol.cmd)
+        return ss + block
