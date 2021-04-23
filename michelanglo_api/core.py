@@ -6,6 +6,7 @@ import time
 
 from .page import MikePage
 from .enums import Privacy, Location
+from .base import BaseAPI
 
 try:
     from .progressbar import Progress
@@ -13,7 +14,7 @@ except:
     Progress = None
 
 
-class MikeAPI:
+class MikeAPI(BaseAPI):
     Privacy = Privacy
     Location = Location
 
@@ -30,20 +31,12 @@ class MikeAPI:
         :param session: supply your own session, debug use basically.
         :param url: specify if using anything other than sgc version (e.g. 'http://0.0.0.0:8088')
         """
-        if url[-1] != '/':
-            url = url + '/'
-        if '://' not in url:
-            url = 'https://' + url
-        self.url = url
+        super().__init__(session=session, url=url)
         self.username = self._retrieve_arg(username, 'MICHELANGLO_USERNAME')
         self.password = self._retrieve_arg(password, 'MICHELANGLO_PASSWORD')
         self.visited_pages = []  # filled by self.refresh_pages()
         self.owned_pages = []  # filled by self.refresh_pages()
         self.public_pages = []  # filled by self.refresh_pages()
-        if session:
-            self.request = session
-        else:
-            self.request = requests.Session()
         self.login()
         self.refresh_pages()
 
@@ -74,19 +67,6 @@ class MikeAPI:
 
     def verify_user(self):
         return self.post_json('login', {'action': 'whoami'})
-
-    # ==================================================================================================================
-
-    def post(self, route, data=None, headers=None):
-        reply = self.request.post(self.url + route, data, headers)
-        if reply.status_code == 200:
-            return reply
-        else:
-            raise Exception('The site {url} returned a status code {code}. Content: {con}' \
-                            .format(url=self.url, code=reply.status_code, con=reply.content))
-
-    def post_json(self, route, data=None, headers=None):
-        return self.post(route, data, headers).json()
 
     # ==================================================================================================================
 
