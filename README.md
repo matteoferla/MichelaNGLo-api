@@ -7,13 +7,6 @@ Python 3.6 or higher.
 
     pip3 install michelanglo-api
 
-## Notes
-The details of the requests accepted by Michelaɴɢʟo are described in [its documentation](https://michelanglo.sgc.ox.ac.uk/docs/api).\
-You may interact with the server however you please. This code is just to make life easier.
-
-There are three tiers of users. Basic, priviledged, admin. Basic users cannot add JS to the site as this is a security threat
-(cookie theft)... And it prevents users from making
-[pages that behave maliciously or similar](https://michelanglo.sgc.ox.ac.uk/data/fa3844a8-d7f5-4e84-9540-240f134ba6d1).
 
 ## Documentation for VenusAPI
 
@@ -29,6 +22,15 @@ venus.random() # uniprot, protein mutation and species
 ```
 
 ## Documentation for MikeAPI
+
+### Notes
+The details of the requests accepted by Michelaɴɢʟo are described in [its documentation](https://michelanglo.sgc.ox.ac.uk/docs/api).\
+You may interact with the server however you please. This code is just to make life easier.
+
+There are three tiers of users. Basic, priviledged, admin. Basic users cannot add JS to the site as this is a security threat
+(cookie theft)... And it prevents users from making
+[pages that behave maliciously or similar](https://michelanglo.sgc.ox.ac.uk/data/fa3844a8-d7f5-4e84-9540-240f134ba6d1).
+
 
 ### Authenticate
 To start, authenticate.
