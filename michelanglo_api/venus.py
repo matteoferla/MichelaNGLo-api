@@ -18,7 +18,7 @@ class Steps(Enum):
 
 class VenusAPI(BaseAPI):
     """
-    see ``analyse``.
+    see ``analyse``, ``match_gene``, ``match_species`` and ``from_transcript``.
 
     """
     steps = Steps
@@ -95,6 +95,8 @@ class VenusAPI(BaseAPI):
                     taxid=taxid,
                     step_name=step_name)
 
+    # ---------------- Random ------------------------------------------------------------------------------------------
+
     def random(self):
         return self.post_json('venus_random')
 
@@ -105,12 +107,7 @@ class VenusAPI(BaseAPI):
                              mutation=random['mutation'],
                              step_name=None)
 
-    # matching
-    def _assert_single(self, reply, required: str):
-        if 'options' in reply:
-            raise ValueError(f'Ambiguous. Specify one of {reply["options"]}')
-        elif required not in reply:
-            raise NotImplementedError(f'This is impossible: {reply}')
+    # ---------------- Matching ----------------------------------------------------------------------------------------
 
     def _match_choice(self, name, reply):
         if 'taxid' in reply or 'uniprot' in reply:
@@ -120,7 +117,7 @@ class VenusAPI(BaseAPI):
         elif reply['options'] == 'many':
             raise ValueError('Too many options.')
         else:
-            return [reply['options']]
+            return reply['options']
 
     def match_species(self, species_name: str):
         """
@@ -143,6 +140,14 @@ class VenusAPI(BaseAPI):
                                )
         return self._match_choice(gene_name, reply)
 
+    # ---------------- Conversion --------------------------------------------------------------------------------------
+
+    def _assert_single(self, reply, required: str):
+        if 'options' in reply:
+            raise ValueError(f'Ambiguous. Specify one of {reply["options"]}')
+        elif required not in reply:
+            raise NotImplementedError(f'This is impossible: {reply}')
+
     def get_taxid(self, species_name: str) -> int:
         """Given a species name, e.g. cat, return the taxid"""
         reply = self.post_json('choose_pdb',
@@ -160,3 +165,13 @@ class VenusAPI(BaseAPI):
                                )
         self._assert_single(reply, 'uniprot')
         return reply['uniprot']
+
+    def from_transcript(self, enst:str, mutation:str) -> dict:
+        reply = self.post_json('venus_transcript',
+                               data=dict(enst=enst,
+                                         mutation=mutation)
+                               )
+        if reply['status'] == 'error':
+            raise VenusError(reply['error'])
+        return reply
+

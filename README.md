@@ -15,7 +15,20 @@ There are three tiers of users. Basic, priviledged, admin. Basic users cannot ad
 (cookie theft)... And it prevents users from making
 [pages that behave maliciously or similar](https://michelanglo.sgc.ox.ac.uk/data/fa3844a8-d7f5-4e84-9540-240f134ba6d1).
 
-## Documentation
+## Documentation for VenusAPI
+
+```python
+venus = VenusAPI()
+# venus = VenusAPI(url='http://0.0.0.0:8088/') for local
+data = venus.analyse(gene='LZTR1', mutation='S244C') # dictionary with data.
+venus.match_species('pink')  # ['Clove pink', 'Pink fawn lily', 'Pink hibiscus mealybug', 'Pink tip anemone',...]
+venus.get_taxid('cat')  # 9685
+venus.get_uniprot('LTR1', 9606)  # Q8N653
+venus.from_transcript(enst, gene_mutation)  # uniprot and protein mutation
+venus.random() # uniprot, protein mutation and species
+```
+
+## Documentation for MikeAPI
 
 ### Authenticate
 To start, authenticate.
@@ -104,18 +117,18 @@ The method `.rename_protein_variable()` does this for you.
 Proteins stored in GitHub can be added via `page.append_github_entry(self, username, repo, path)` where the name
 will be a sluggified filename.
     
-## Page creation
+### Page creation
 New pages can be added using either a pdb code or a filename with additional arguments as used by prolinks,
 but with underscores instead of spaces.
 
     new_page = mike.convert_pdb(code='1UBQ', data_focus='residue', data_selection='20:A')
     new_page = mike.convert_pdb(filename='/home/my_protein.pdb')
     
-## Admin commands
+### Admin commands
 
 Some commands are for admins only. Please do not try them out or you will get automatically blocked.
 
-## Table
+### Table
 
 For the Covid Moonshot, I made a few interactive tables with different poses,
 _eg._ [Fragmenstein hits](https://michelanglo.sgc.ox.ac.uk/data/13523b58-d0b1-4d05-9158-a8fd2be8465c).
@@ -150,7 +163,7 @@ page.commit()
 ```
 Don't forget to git add, commit and push
 
-## "Merging"
+### "Merging"
 
 The object `MikePage` does not have a merge uuids like the website has. The reason for this is because this would be rather
 redundant and convoluted. To add structures to a page use the following methods:
@@ -164,17 +177,17 @@ Or operate upon the manually. PDBBlocks are stored in `.pdbs` (`Dict[str: str]`)
 while `.proteins` (`List[dict]`) stores the protein information.
 
 
-## More
+### More
 
 For more, see [Sphinx generated documentation](sphinx-docs.md).
 
-## To Do
+### To Do
 
 * Get Uniprot chain definitions
 * read/write MD from/to cell
 * 
 
-## Plotly
+### Plotly
 
 With JS priviledges it is possible to add a Plotly plot, by exporting via `fig.write_html("file.html", include_plotlyjs='cdn')`
 and getting the content of `<body>` and adding to the description (with corrected indentation).
