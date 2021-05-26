@@ -1,3 +1,7 @@
+"""
+This requires friend or admin role.
+"""
+
 from typing import Optional, List, Dict, Tuple
 
 import re
@@ -112,3 +116,9 @@ def make_header_slide(title: str, subtitle: str) -> str:
     else:
         wrapped_sub = ''
     return f'<div class="jumbotron p-5"><h1 class="display-4">{title}</h1>{wrapped_sub}</div>'
+
+
+def make_ext(url:str, text:Optional[str]=None) -> str:
+    if text is None:
+        text = url
+    return f'<a href="{url}" target="_blank">{text} <i class="far fa-external-link"></i></a>'

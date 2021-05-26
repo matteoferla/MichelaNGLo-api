@@ -28,7 +28,7 @@ class BaseAPI:
         if reply.status_code == 200:
             return reply
         else:
-            raise ValueError()
+            raise ValueError(reply.text)
 
     def post_json(self, route, data=None, headers=None):
         return self.post(route, data, headers).json()
