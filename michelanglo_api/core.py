@@ -113,7 +113,7 @@ class MikeAPI(BaseAPI):
 
     # ==================================================================================================================
 
-    def convert_pdb(self, code=None, filename=None, **prolink_settings):
+    def convert_pdb(self, code=None, filename=None, pdbblock=None, **prolink_settings):
         """
         use underscores for the hyphens in the data attr!
         >>> new_page = mike.convert_pdb(code='1UBQ', data_focus='residue', data_selection='20:A')
@@ -129,6 +129,10 @@ class MikeAPI(BaseAPI):
         elif filename:
             data['mode'] = 'file'
             data['pdb'] = open(filename).read()
+        elif pdbblock:
+
+            data['mode'] = 'file'
+            data['pdb'] = pdbblock
         else:
             raise ValueError('Specifiy at least a pdb `code` or a `file`')
         data['viewcode'] = ' '.join(
@@ -219,3 +223,16 @@ class MikeAPI(BaseAPI):
         if 'email' not in reply:
             raise ValueError(str(reply))
         return reply['email']
+
+    @classmethod
+    def guest_login(cls):
+        warn('Few features will be functional...')
+        self = cls.__new__(cls)
+        cls.__mro__[1].__init__(self)  # could super do this?
+        self.username = None
+        self.password = None
+        self.visited_pages = []  # filled by self.refresh_pages()
+        self.owned_pages = []  # filled by self.refresh_pages()
+        self.public_pages = []  # filled by self.refresh_pages()
+        # self.refresh_pages()
+        return self

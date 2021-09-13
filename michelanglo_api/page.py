@@ -189,6 +189,8 @@ class MikePage(TableMixin):
 
         :return:
         """
+        if 'status' in data and data['status'] == 'page not found':
+            raise ValueError('Page does not exist')
         # proteinJSON -> protein
         # unfortunately I need to change how the data is sent. but I never get round to it.
         if isinstance(data['proteinJSON'], str):  # will be.
@@ -286,12 +288,12 @@ class MikePage(TableMixin):
         pickle.dump(self.dumps(), open(filename,'wb'))
 
     def from_pickle(self, filename: str):
-        data = pickle.load(open(filename,'wb'))
+        data = pickle.load(open(filename,'rb'))
         self.page = data['page']
         self.proteins = json.loads(data['proteinJSON'])
         self.pdbs = {k: v for k, v in json.loads(data['pdb'])}
-        self.location_viewport.name = data['location_viewport']
-        self.public.name = data['public']
+        self.location_viewport = Location[data['location_viewport']]
+        self.public = Privacy[data['public']]
 
     def save(self, name: str):
         """
