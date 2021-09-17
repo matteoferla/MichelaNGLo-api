@@ -23,11 +23,27 @@ class VenusAPI(BaseAPI):
     """
     steps = Steps
 
+    defaults = {'swiss_oligomer_identity_cutoff': 40,
+                'swiss_monomer_identity_cutoff': 70,
+                'swiss_oligomer_qmean_cutoff': -2,
+                'swiss_monomer_qmean_cutoff': -2,
+                'cycles': 1,
+                'radius': 12,
+                'scorefxn_name': 'ref2015',
+                'allow_pdb': True,
+                'allow_swiss': True,
+                'allow_alphafold': True,
+                'job_id': None, ## Do not touch this unless you know what you are doing.
+                # these are not allowed as 'customfile' route as API does not allow this.
+                # extras.pdb, filename, params, format
+                }
+
     def analyse(self,
                 gene: str,
                 mutation: str,
                 species: Union[int, str] = 9606,
-                step: Optional[Union[str, Steps]] = None) -> dict:
+                step: Optional[Union[str, Steps]] = None,
+                **extras) -> dict:
         """
         >>> venus = VenusAPI()  # url argument for custom
         >>> venus.analyse(gene='LZTR1', mutation='S244C')  # omitted species is human
@@ -51,21 +67,22 @@ class VenusAPI(BaseAPI):
         :param mutation:
         :param species: taxid or species name. If unsure of species name use ``venus.match_species``.
         :param step:
+        :param extras: extra arguments for run. see ``.defaults`` for defaults.
         :return: dictionary with data
         """
         # overloaded is 3.8 so avoided.
         # parse inputs
         inputs = self._parse_analysis_inputs(mutation, gene, species, step)
         # analyse
-        return self._analyse(**inputs)
+        return self._analyse(**inputs, **extras)
 
-    def _analyse(self, mutation, uniprot, taxid, step_name):
-        reply = self.post_json('venus_analyse',
-                               data=dict(uniprot=uniprot,
-                                         species=taxid,
-                                         mutation=mutation,
-                                         mode='json', step=step_name)
-                               )
+    def _analyse(self, mutation, uniprot, taxid, step_name, **extras):
+        essential = dict(uniprot=uniprot,
+                         species=taxid,
+                         mutation=mutation,
+                         mode='json',
+                         step=step_name)
+        reply = self.post_json('venus_analyse', data={**essential, **extras} )
         # parse reply
         if reply['status'] == 'error':
             raise VenusError(reply['msg'])

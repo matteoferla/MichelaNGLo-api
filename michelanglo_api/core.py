@@ -130,7 +130,6 @@ class MikeAPI(BaseAPI):
             data['mode'] = 'file'
             data['pdb'] = open(filename).read()
         elif pdbblock:
-
             data['mode'] = 'file'
             data['pdb'] = pdbblock
         else:
