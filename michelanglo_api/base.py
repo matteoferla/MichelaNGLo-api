@@ -4,6 +4,8 @@ import requests
 #  The site http://0.0.0.0:8088/ returned a status code 422. Content: b'{"status": "Missing field ([\'gene\'])"}'
 
 class BaseAPI:
+    timeout = 3 * 60
+
     def __init__(self,
                  session: Optional[requests.Session] = None,
                  url: str = 'https://michelanglo.sgc.ox.ac.uk/'):
@@ -24,7 +26,7 @@ class BaseAPI:
             self.request = requests.Session()
 
     def post(self, route, data=None, headers=None):
-        reply = self.request.post(self.url + route, data, headers)
+        reply = self.request.post(self.url + route, data, headers, timeout=self.timeout)
         if reply.status_code == 200:
             return reply
         else:
