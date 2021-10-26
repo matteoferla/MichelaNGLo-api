@@ -75,7 +75,7 @@ class MikeAPI(BaseAPI):
         self.visited_pages = [MikePage(self, uuid) for uuid in data['visited']]
         self.owned_pages = [MikePage(self, uuid) for uuid in data['owned']]
         self.public_pages = [MikePage(self, uuid) for uuid in data['public']]
-        self.all_pages = [MikePage(self, uuid) for uuid in data['all']]  # admin only
+        self.all_pages = {category: [MikePage(self, uuid) for uuid in data['all'][category]] for category in data['all']}  # admin only
         return self
 
     def get_page(self, uuid: str) -> MikePage:

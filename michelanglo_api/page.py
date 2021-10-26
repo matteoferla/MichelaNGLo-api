@@ -142,7 +142,8 @@ class MikePage(TableMixin):
 
     def __setattr__(self, attr, value) -> None:
         ## Accepts custom fields. Messes up @property, so it is done manually.
-        dynamics = {'columns_viewport': self._set_columns_viewport, 'columns_text': self._set_columns_text}
+        dynamics = {'columns_viewport': self._set_columns_viewport,
+                    'columns_text': self._set_columns_text}
         if attr in dynamics.keys():
             dynamics[attr].__call__(value)
         elif attr in self.preferences and not isinstance(value, self.preferences[attr]):
@@ -365,7 +366,7 @@ class MikePage(TableMixin):
                     value: Optional[str] = None) -> Dict:
         """
         Overloaded method. accepts one of the three parameters:
-        
+
         :param index: list index
         :param name: name of protein
         :param value: value of protein, this is the JS function
@@ -465,8 +466,9 @@ class MikePage(TableMixin):
         This is an admin only operation due to the security issue (dodgy links in the gallery).
         Publication is not data from the page, it's an actual table
 
+
         :param uuid:
-        :param url:
+        :param url: If no URL is provided it is generated from DOI
         :param authors:
         :param year:
         :param title:
@@ -490,6 +492,15 @@ class MikePage(TableMixin):
                                              'authors': authors,
                                              'journal': journal,
                                              'issue': issue})
+
+    def protect(self):
+        return self.parent.post_json('set', {'item': 'protection',
+                                             'page': self.page})
+
+    def deprotect(self):
+        return self.parent.post_json('set', {'item': 'deprotection',
+                                             'page': self.page})
+
 
     # ======== Parent ==================================================================================================
 
