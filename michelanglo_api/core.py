@@ -1,17 +1,20 @@
-import requests, json, pickle, re, os
-from warnings import warn
-from typing import Dict, Optional
-from datetime import datetime, timedelta
 import time
+from datetime import datetime, timedelta
+from typing import Optional
+from warnings import warn
 
-from .page import MikePage
-from .enums import Privacy, Location
+import os
+import requests
+
 from .base import BaseAPI
+from .enums import Privacy, Location
+from .page import MikePage
 
 try:
     from .progressbar import Progress
-except:
+except Exception as e:
     Progress = None
+    warn(f'Progressbar not importable: {e}')
 
 
 class MikeAPI(BaseAPI):
@@ -75,7 +78,9 @@ class MikeAPI(BaseAPI):
         self.visited_pages = [MikePage(self, uuid) for uuid in data['visited']]
         self.owned_pages = [MikePage(self, uuid) for uuid in data['owned']]
         self.public_pages = [MikePage(self, uuid) for uuid in data['public']]
-        self.all_pages = {category: [MikePage(self, uuid) for uuid in data['all'][category]] for category in data['all']}  # admin only
+        if isinstance(data['all'], dict):
+            self.all_pages = {category: [MikePage(self, uuid)
+                                         for uuid in data['all'][category]] for category in data['all']}  # admin only
         return self
 
     def get_page(self, uuid: str) -> MikePage:
@@ -116,9 +121,12 @@ class MikeAPI(BaseAPI):
     def convert_pdb(self, code=None, filename=None, pdbblock=None, **prolink_settings):
         """
         use underscores for the hyphens in the data attr!
-        >>> new_page = mike.convert_pdb(code='1UBQ', data_focus='residue', data_selection='20:A')
-        >>> new_page = mike.convert_pdb(filename='/home/my_protein.pdb')
-        >>> mike.page_link(new_page['page'])
+
+        ```python
+        new_page = mike.convert_pdb(code='1UBQ', data_focus='residue', data_selection='20:A')
+        new_page = mike.convert_pdb(filename='/home/my_protein.pdb')
+        mike.page_link(new_page['page'])
+        ```
         """
         data = {}
         prolink_settings['role'] = 'NGL'
@@ -167,6 +175,25 @@ class MikeAPI(BaseAPI):
     def print_reply(reply):
         print(f'Status code: {reply.status_code}; Headers: {reply.headers}; Content: {reply.content}')
 
+    def find_page_by_keyword(self, keyword: str) -> MikePage:
+        """
+        This is a time-consuming operation as the data needs to be retrieved.
+
+        :param keyword:
+        :return:
+        """
+        keyword: str = str(keyword).lower()
+        assert keyword != '', 'empty keyword'
+        for page in self.owned_pages:
+            page.retrieve()
+            if keyword in page.title.lower():
+                return page
+        for page in self.owned_pages:
+            if keyword in page.description.lower():
+                return page
+        else:
+            raise ValueError(f'no owned page with {keyword}')
+
     # def rename_pdb(self, data, name: str, idx: Optional[int] = None, original: Optional[str] = None):
     #     # original is the name in the original version. idx is the index
     #     if original is not None:
@@ -204,7 +231,7 @@ class MikeAPI(BaseAPI):
         assert 'MIKE_SECRET' in os.environ, 'Please provide the secret code as an environment variable.'
         self.set_toast(title='<i class="far fa-danger"></i> App server restart',
                        description=f'In order to implement the latest changes ({change}), ' +
-                                    'the App will update and restart at ' +
+                                   'the App will update and restart at ' +
                                    f'{datetime.now() + timedelta(seconds=timeout)} BST ({timeout} sec. countdown). ' +
                                    f'This will be a brief blip. You might not even notice it!',
                        bg='bg-danger')
