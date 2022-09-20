@@ -188,7 +188,7 @@ class VenusAPI(BaseAPI):
                                data=dict(enst=enst,
                                          mutation=mutation)
                                )
-        if reply['status'] == 'error':
+        if 'status' in reply and reply['status'] == 'error':
             raise VenusError(reply['error'])
         return reply
 
