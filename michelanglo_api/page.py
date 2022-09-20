@@ -3,7 +3,7 @@ try:
 except ImportError:
     pass  # not jupyter.
 
-import json, re, os, pickle
+import json, re, os, pickle, requests
 from warnings import warn
 from typing import Any
 from datetime import datetime
@@ -365,7 +365,7 @@ class MikePage(TableMixin):
                     name: Optional[str] = None,
                     value: Optional[str] = None) -> Dict:
         """
-        Overloaded method. accepts one of the three parameters:
+        Faux-overloaded method. accepts one of the three parameters:
 
         :param index: list index
         :param name: name of protein
@@ -447,12 +447,28 @@ class MikePage(TableMixin):
         self.pdbs[varname] = pdbblock
         return len(self.proteins) - 1
 
+    def append_url(self, name: str, url: str, ext: str = 'pdb', verify: bool = True):
+        if verify:  # test url
+            response = requests.get(url)
+            response.raise_for_status()
+        self.proteins.append(dict(name=name,
+                                  type='url',
+                                  ext=ext,
+                                  value=url)
+                             )
+
     def remove_protein(self, index):
         if self.proteins[index]['type'] == 'data':
             del self.pdbs[self.proteins[index]['value']]
         d = self.proteins[index]
         del self.proteins[index]
         return d
+
+    def get_pdb_url(self, name):
+        i = self.get_protein(name=name)
+        return f'/save_pdb?uuid={self.page}&key=None&index={i}'
+
+    # ======== Published ===============================================================================================
 
     def add_publication(self,
                         url: Optional[str] = None,
