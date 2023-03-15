@@ -7,29 +7,30 @@ import os, json
 from typing import List, Sequence
 from warnings import warn
 
+
 class TableMixin:
 
     def pandas_to_mols(self,
-                      df: 'pd.DataFrame',
-                      targetfolder: str,
-                      name_column_name: str = 'name',
-                      mol_column_name: str = 'mol',
-                      skip_first=False) -> List[str]:
+                       df: 'pd.DataFrame',
+                       targetfolder: str,
+                       name_column_name: str = 'name',
+                       mol_column_name: str = 'mol',
+                       skip_first=False) -> List[str]:
         """
         Extracts the mols
-
 
         :param df: pandas datatable. Most likely the dataframe is ``rdkit.Chem.PandasTools`` flavoured,
             but this is not a requirement
         :param targetfolder: folder where to save the mol files (in a github repo)
         :param name_column_name: column name containing the molecule name
         :param mol_column_name: column name containing the molecules
-        :param skip_first: default False, skip first if its definitions XChem style.
+        :param skip_first: default False, skip first if its definitions Moonshot style.
         :return:
         """
         filenames = []
         for i, row in df.iterrows():
             if skip_first and i == 0:
+                # definitions Moonshot style
                 continue
             mol = row[mol_column_name]
             name = row[name_column_name]
@@ -39,13 +40,13 @@ class TableMixin:
             elif not name:
                 filename = f'compound_{i}'
             else:
-                def valid(character): any([character.isalpha(),
-                                           character.isdigit(),
-                                           character in (' ', '-', '_', '.')
-                                           ])
+                valid = lambda character: any([character.isalpha(),
+                                               character.isdigit(),
+                                               character in (' ', '-', '_', '.')
+                                               ])
                 filename = ''.join(filter(valid, name)).strip()
             filename += '.mol'
-            Chem.MolToMolFile(mol, filename)
+            Chem.MolToMolFile(mol, os.path.join(targetfolder, filename))
             filenames.append(filename)
         return filenames
 
@@ -83,7 +84,7 @@ class TableMixin:
                     keys: Sequence[str],
                     key_defaults: Sequence[float],
                     filename: str,
-                    spaced:bool=True
+                    spaced: bool = True
                     ) -> List[list]:
         """
         Get the keys out of the sdf and make a list of lists. filling blanks with the defaults.
@@ -122,26 +123,26 @@ class TableMixin:
             data.append(d)
         # Make header
         if not spaced:
-            header = [['name']+list(keys)]
+            header = [['name'] + list(keys)]
         else:
-            header = [[k.replace('_',' ') for k in ['name']+list(keys)]]
+            header = [[k.replace('_', ' ') for k in ['name'] + list(keys)]]
         # Combine
         flatten = header + [list(d.values()) for d in data]
         json.dump(flatten, open(filename, 'w'))
         return flatten
 
     def make_fragment_table(self,
-                   metadata:Dict[str, str],
-                   username:str,
-                   repo_name:str,
-                   foldername:str,
-                   protein_sele:str,
-                   sort_col:int,
-                   sort_dir:str='asc',
-                   template_row:int=-1,
-                   fragment_row:int=-1,
-                   jsonfile:str='data.json',
-                   branch:str='main'):
+                            metadata: Dict[str, str],
+                            username: str,
+                            repo_name: str,
+                            foldername: str,
+                            protein_sele: str,
+                            sort_col: int,
+                            sort_dir: str = 'asc',
+                            template_row: int = -1,
+                            fragment_row: int = -1,
+                            jsonfile: str = 'data.json',
+                            branch: str = 'main'):
         """
         Makes a interactive table out of xchem submission.
         NB. this formerly accepted an SDF (XChem style formatted) not it is agnostic
@@ -180,8 +181,8 @@ class TableMixin:
                             });'''
         load_table = f'const giturl = "{giturl}"; const jsonfile = "{jsonfile}";' + \
                      f'const sort_col = {sort_col}; const sort_dir= "{sort_dir}";' + \
-                     f'const protein_sele = "{protein_sele}"; const template_row={template_row};' +\
-                     f'const fragment_row={fragment_row};' +\
+                     f'const protein_sele = "{protein_sele}"; const template_row={template_row};' + \
+                     f'const fragment_row={fragment_row};' + \
                      '''fetch(`${giturl}/${jsonfile}`)
                         .then((response) => {
                             return response.json();
@@ -197,7 +198,7 @@ class TableMixin:
                                 });
                             window.makeTableClickable(giturl, protein_sele, template_row, fragment_row);
                         });\n'''
-        self.loadfun +=  '''window.makeTableClickable = (giturl, protein_sele, template_row, fragment_row) => {
+        self.loadfun += '''window.makeTableClickable = (giturl, protein_sele, template_row, fragment_row) => {
                         $('#data tbody').css('cursor', 'pointer');
                         $('#data tbody').on('click', 'tr', function () {
                         $('#data .bg-info').removeClass('bg-info');
@@ -243,4 +244,4 @@ class TableMixin:
                         }
                         NGL.specialOps.load(name, false);
                     });};'''
-        self.loadfun += '$(document).ready(() => { setTimeout(() => {' +load_table +'},200)});'
+        self.loadfun += '$(document).ready(() => { setTimeout(() => {' + load_table + '},200)});'
