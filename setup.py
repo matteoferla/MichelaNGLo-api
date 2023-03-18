@@ -26,6 +26,7 @@ setup(
     name='michelanglo_api',
     version= __version__,
     packages=find_packages(),
+    include_package_data=True,
     requires=['requests', 'pandas', 'numpy'],
     url='https://github.com/matteoferla/MichelaNGLo-api',
     license=__license__,

@@ -6,6 +6,7 @@ from rdkit import Chem
 import os, json
 from typing import List, Sequence
 from warnings import warn
+import importlib.resources as pkg_resources
 
 
 class TableMixin:
@@ -131,6 +132,74 @@ class TableMixin:
         json.dump(flatten, open(filename, 'w'))
         return flatten
 
+
+    def join_rawgit(self, username: str, repo_name: str, foldername: str, branch='main'):
+        return f'https://raw.githubusercontent.com/{username}/{repo_name}/{branch}/{foldername}'
+
+    def get_fragment_js(self,
+                               hit_sdf_url: str,
+                               model_sdf_urldex: dict,
+                               metadata_url: str,
+                               model_colordex: dict = None,
+                               hit_color='grey',
+                               template_color='gainsboro',
+                               name_col_idx: int = 0,
+                               hit_col_idx: int = 1,
+                               target_col_idx: int = -1,
+                               sort_col: int = 2,
+                               sort_dir: str = 'asc',
+                               fun_name: str = 'loadTable',
+                               ):
+        """
+        A key step in making an interactive table out of followup compounds.
+
+        Given a set of URLs, make a fragment table JS file.
+        The names of the mols in the sdf are lost in NGL, hence the need for the metadata file
+        to contain a list of names of the molecules:
+
+        * ``hitnames`` for the hits
+        * ``modelnames`` for the models if they are all 100% the same order (!?) or
+        * ``model_namedex`` (or ``modelnamedex``) for the models
+
+        :param hit_sdf_url: the URL of the hit SDF file. The order must match json's ``hitnames``.
+        :param model_sdf_urldex: a dict of model names to SDF URLs.
+        :param metadata_url: a json file with headers, data, hitnames, model_namedex/modelnamedex/modelnames
+        :param model_colordex: a dict of model names to colors. #hex codes need to be provided as 0xhex numbers
+        :param hit_color: color of the hit molecules
+        :param template_color: color of the template
+        :param name_col_idx: the column index of the name column
+        :param hit_col_idx: the column index of the hit column (the value within is an array)
+        :param target_col_idx: the column index of the protein template compound
+        :param sort_col: the column index to sort by
+        :param sort_dir:  the direction to sort by, either 'asc' or 'desc'
+        :param fun_name: what to call the function that adds this table?
+        :return:
+        """
+
+        # sanitize.
+        for url in [metadata_url, hit_sdf_url, *model_sdf_urldex.values()]:
+            assert 'http' in url, f'{url} needs to be a URL'
+        if model_colordex is None:
+            model_colordex = {}
+        model_colordex = {n: model_colordex.get(c, 'teal') for n, c in model_sdf_urldex.items()}
+        user_definitions = dict(card_idx=1 if self.location_viewport.name == 'left' else 0,
+                                hit_sdf_url=str(hit_sdf_url),
+                                model_sdf_urldex=model_sdf_urldex,  # dict name to url
+                                metadata_url=str(metadata_url),
+                                hit_color=hit_color,
+                                model_colordex=model_colordex,
+                                template_color=template_color,
+                                sort_col=int(sort_col),
+                                sort_dir=str(sort_dir),
+                                name_col_idx=int(name_col_idx),
+                                hit_col_idx=int(hit_col_idx),
+                                target_col_idx=int(target_col_idx),
+                                )
+        new_js = f'window.user_definitions = {json.dumps(user_definitions)};\n'
+        new_js += pkg_resources.read_text(__package__, 'table.js')
+        return f'window.{fun_name} = () => {{{new_js}}};'
+
+
     def make_fragment_table(self,
                             metadata: Dict[str, str],
                             username: str,
@@ -163,6 +232,7 @@ class TableMixin:
         :param branch: main or master etc.
         :return:
         """
+        warn('This is deprecated. Use get_fragment_js instead.')
         giturl = f'https://raw.githubusercontent.com/{username}/{repo_name}/{branch}/{foldername}'
         # Description
         self.description += '## Fields\n\n' + ''.join([f'* **{k}**: {v}\n' for k, v in metadata.items()]) + '\n'
