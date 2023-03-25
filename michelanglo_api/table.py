@@ -149,7 +149,7 @@ class TableMixin:
                                sort_col: int = 2,
                                sort_dir: str = 'asc',
                                fun_name: str = 'loadTable',
-                               ):
+                               ) -> str:
         """
         A key step in making an interactive table out of followup compounds.
 
@@ -196,9 +196,12 @@ class TableMixin:
                                 target_col_idx=int(target_col_idx),
                                 )
         new_js = f'window.user_definitions = {json.dumps(user_definitions)};\n'
-        new_js += pkg_resources.read_text(__package__, 'table.js')
+        new_js += self.fragment_table_template
         return f'window.{fun_name} = () => {{{new_js}}};'
 
+    @property
+    def fragment_table_template(self):
+        return pkg_resources.read_text(__package__, 'table.js')
 
     def make_fragment_table(self,
                             metadata: Dict[str, str],

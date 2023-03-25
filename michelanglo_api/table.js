@@ -6,7 +6,8 @@ if (document.getElementById("data") === null) {
     table_el.id = "data";
     table_el.classList.add('display');
     table_el.setAttribute('width', "100%");
-    document.getElementsByClassName("card-body")[user_definitions.card_idx].appendChild(table_el);
+    //
+    document.getElementById("uniprot_btns").prepend(table_el);
     ops.addToast('loading_toast', 'Data is being loaded', 'Please be patient', 'bg-info');
 }
 
@@ -47,8 +48,17 @@ const dataLoader = (data) => {
         // hits
         let hit_sdf = NGL.getStage().compList[user_definitions.hit_idx];
         let hit_names = user_definitions.hit_col_idx !== -1 ? data[user_definitions.hit_col_idx] : [];
-        if (typeof hit_names == 'string') {
+        if (Array.isArray(hit_names)) {
+            // pass
+        }
+        else if (typeof hit_names !== 'string') {
+            ops.addToast('error_toast', 'TypeError ' + hit_name, 'TypeError', 'bg-danger');
+            return null;
+        }
+        else if (hit_names.includes('[')) {
             hit_names = JSON.parse(hit_names);
+        } else {
+            hit_names = hit_names.split(',');
         }
         let sele_ids = [...hit_names].map(hit_name => user_definitions.hitnames.indexOf(hit_name));
         if (sele_ids.some(v => v === -1)) {
