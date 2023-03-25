@@ -1,13 +1,113 @@
 ### Table
 
 A table of followup compounds which can be shown overlayed with their inspiration fragment hits.
-These pages can be made with the API by a **priviledged** users (tldr; email matteo for access).
+These pages can be made with the API by a **privileged** users (tldr; email matteo for access).
 
 
 This was not meant to be an official feature, but has become one.
-It has one issue: the files are kepts outside.
+It has a few issues: the files are kept outside and it's rather complicated.
+One has to do the following:
+
+* make a sdf files of the hits and a keep a list of the compound names
+* make a sdf file of the followups
+* make a json file with the metadata, which needs a few keys to be present
+* make a js function
+* add a call to the js function to the page
+
+```python
+from michelanglo_api import MikeAPI
+from rdkit import Chem
+from typing import List
+import pandas as pd
+import json
+
+# declare variables
+hits: List[Chem.Mol] = [...] # list of hits
+hit_filename: str = ... # SDF filename to save the hits to
+followups: pd.DataFrame = ... # dataframe of followups
+followup_filename: str = ... # SDF filename to save the followups to
+metadata_filename: str = ... # JSON filename to save the metadata to
+headers = ['name', 'hit_names', 'group', '∆∆G', ...]  # headers to show in the table
+base_url = 'https://...'  # base url path
+uuid = '...' # uuid of the page target
 
 
+# Save the hits to a file to upload to a XSS enabled server
+hit_names = []
+with Chem.SDWriter(hit_filename) as sdw:
+    for hit in hits:
+        sdw.write(hit)
+        
+# get the hit names
+hit_names = [hit.GetProp('_Name') for hit in hits]
+
+# make model_sdf_urldex and metadata_url
+
+metadata = followups[headers].copy(deep=True)
+# make sure the keys do not contain nans
+for k in ('∆∆G', 'LE', 'RMSD'):
+    metadata[k] = metadata[k].fillna(999).astype(float).round(1)
+for k in ('N_interactions', 'N_HA', 'N_rotatable'):
+    metadata[k] = metadata[k].fillna(-1).astype(int)
+
+# write the followup_filename
+# make sure mols in the SDF have names even if NGL does not keep them...
+with Chem.SDWriter(followup_filename) as sdw:
+    mol: Chem.Mol
+    for name, mol in zip(metadata['name'], metadata.mol):
+        mol.SetProp('_Name', name)
+        sdw.write(mol)
+
+with open(metadata_filename, 'w') as fh:
+    json.dump(dict(
+                   headers=headers,
+                   data=metadata.values.tolist(),
+                   modelnamedex={'prediction': metadata['name'].to_list()},
+                   hitnames=hit_names,
+            ), fh)
+    
+# make a page
+
+mike = MikeAPI()
+page = mike.get_page(uuid)
+
+page.loadfun = page.get_fragment_js(hit_sdf_url=base_url+hit_filename,
+                               model_sdf_urldex={'prediction': base_url+followup_filename},
+                               metadata_url=base_url+metadata_filename,
+                               model_colordex={'prediction': 'salmon'},
+                               hit_color='grey',
+                               template_color='gainsboro',
+                               name_col_idx = headers.index('name'),
+                               hit_col_idx = headers.index('hit_names'),
+                               target_col_idx = -1, # headers.index('target')
+                               sort_col = headers.index('LE'),
+                               sort_dir = 'asc',
+                               fun_name ='loadTable')
+
+# create a way to load the protein
+# laziest: 
+#page.loadfun += 'setTimeout(loadTable, 1000)'
+# better:
+page.loadfun += """
+window.loadprotein = (prot) => {prot.removeAllRepresentations(); 
+                                prot.addRepresentation('cartoon');
+                                prot.addRepresentation('line', {sele: '454 or ...', colorValue: 'cyan'}); 
+                                prot.autoView(); 
+                                prot.setName('template');
+                                loadTable(); 
+                                }
+"""
+page.proteins[0]['loadFx'] = 'loadprotein'
+page.title = '...'
+page.description = f'## Predicted followups\n...\n'
+page.columns_text = 6
+page.commit()
+```
+
+The JS template is from `page.fragment_table_template` dynamic attribute.
+If each row uses a different template PDB, then `target_col_idx` needs to be specified.
+The values need to match a declared protein in the page, 
+i.e. `page.proteins.append( dict(name='foo', type='url', value='https://foo.pdb') )`.
 
 ## Past
 This code has gone through several iterations.
