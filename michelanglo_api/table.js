@@ -85,7 +85,7 @@ const dataLoader = (data) => {
                 model_sdf.addRepresentation("hyperball", {
                     sele: 'not _H',
                     colorValue: user_definitions.model_colordex[groupname],
-                    opacity: 0.3
+                    opacity: user_definitions.opacity,
                 });
                 model_sdf.autoView("/" + m_id);
             }

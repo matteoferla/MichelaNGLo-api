@@ -149,6 +149,7 @@ class TableMixin:
                                sort_col: int = 2,
                                sort_dir: str = 'asc',
                                fun_name: str = 'loadTable',
+                               opacity: float = 0.7,
                                ) -> str:
         """
         A key step in making an interactive table out of followup compounds.
@@ -181,7 +182,7 @@ class TableMixin:
             assert 'http' in url, f'{url} needs to be a URL'
         if model_colordex is None:
             model_colordex = {}
-        model_colordex = {n: model_colordex.get(c, 'teal') for n, c in model_sdf_urldex.items()}
+        model_colordex = {n: model_colordex.get(n, 'teal') for n, c in model_sdf_urldex.items()}
         user_definitions = dict(card_idx=1 if self.location_viewport.name == 'left' else 0,
                                 hit_sdf_url=str(hit_sdf_url),
                                 model_sdf_urldex=model_sdf_urldex,  # dict name to url
@@ -194,6 +195,7 @@ class TableMixin:
                                 name_col_idx=int(name_col_idx),
                                 hit_col_idx=int(hit_col_idx),
                                 target_col_idx=int(target_col_idx),
+                                opacity=float(opacity),
                                 )
         new_js = f'window.user_definitions = {json.dumps(user_definitions)};\n'
         new_js += self.fragment_table_template
